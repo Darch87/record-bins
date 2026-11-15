@@ -151,7 +151,15 @@ html,body{margin:0;padding:0;background:#F6F5F0}
 #rb .money .facts b{font-size:14px}
 #rb .money .facts span{color:var(--muted)}
 #rb .wave{display:flex;flex-direction:column;gap:2px;min-width:0}
-#rb .wave svg{width:100%;height:44px;display:block}
+#rb .wave svg{width:100%;height:auto;aspect-ratio:320/82;display:block;overflow:visible}
+#rb .wkey{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:11px;color:var(--muted)}
+#rb .wkey span{display:inline-flex;align-items:center;gap:4px}
+#rb .wkey i{display:inline-block;width:10px;height:8px}
+#rb .wkey .kw{background:var(--accent);opacity:.35;border-radius:5px 5px 0 0}
+#rb .wkey .kd{width:7px;height:7px;border:1.5px solid #1B1D21;border-radius:50%;background:#fff}
+#rb .wkey .kt{width:1.5px;height:8px;background:#1B1D21}
+#rb .wkey .kp{width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:6px solid #1B1D21}
+#rb .facts .vsrc{font-size:11px;color:var(--muted)}
 #rb .wave .cap{font-size:12px;color:var(--muted)}
 #rb .wave .cap b{color:var(--ink)}
 
@@ -280,6 +288,7 @@ html,body{margin:0;padding:0;background:#F6F5F0}
 /* manage records */
 #rb .mgr{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:8px;align-items:start}
 #rb .mgr .panel{overflow:visible}
+#rb .mcol{display:flex;flex-direction:column;gap:8px;min-width:0}
 #rb .mbody{padding:12px 14px 14px;display:flex;flex-direction:column;gap:12px}
 #rb .mgr h2{font:800 22px var(--display);margin:0}
 #rb .form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px}
@@ -388,6 +397,12 @@ function fmtLen(ms){ const s=Math.round(ms/1000); return Math.floor(s/60)+":"+St
 function sortName(r){ return (r.artist||"").replace(/^the\s+/i,"").toLowerCase(); }
 function letterOf(r){ const c=sortName(r).charAt(0).toUpperCase(); return /[A-Z]/.test(c)?c:"#"; }
 function valueOf(r){ return r.value!=null?r.value:r.cost; }
+/* Value can be a number or a range like "$4–$25 (Discogs)"; sorting uses the middle of the range */
+function vrange(s){ s=String(s||""); const m=s.replace(/,/g,"").match(/\d+(?:\.\d+)?/g)||[], src=(s.match(/\(([^)]+)\)/)||[])[1]||"";
+  const n=m.map(Number).filter(x=>x>0); if(!n.length) return {value:null};
+  const lo=n[0], hi=n.length>1&&/[–-]|to/.test(s)?n[1]:null;
+  return hi&&hi>lo?{value:Math.round((lo+hi)/2*100)/100,vlo:lo,vhi:hi,vsrc:src}:{value:lo,vsrc:src}; }
+function valueText(r){ if(r.vhi) return money(r.vlo)+"–"+money(r.vhi); const v=valueOf(r); return v?money(v)+(r.vsrc&&/lowest/i.test(r.vsrc)?"+":""):""; }
 function status(t,ms){ const s=$("#rb-status"); if(!s) return; s.textContent=t; s.hidden=!t; clearTimeout(status.t); if(t&&ms!==0) status.t=setTimeout(()=>s.hidden=true,ms||3500); }
 
 let RECS=[];
@@ -444,7 +459,7 @@ function rowsToRecs(rows){
   const col=(...ks)=>{ for(const k of ks){ const a=h.findIndex(x=>x===k); if(a>=0) return a; } for(const k of ks){ const a=h.findIndex(x=>x.startsWith(k)); if(a>=0) return a; } return -1; };
   const A=col("artist","album artist"), T=h.findIndex(x=>(x.startsWith("album")||x.startsWith("title"))&&!x.includes("artist")), Y=col("year"), G=col("genre"), S=col("collection","shelf"), F=col("from","source"), C=col("cost"), V=col("value","resale"), Q=h.findIndex(x=>x==="quality"||x==="condition"), CV=col("cover");
   const g=(r,k)=>k<0?"":(r[k]||"").trim(), num=s=>{ const n=parseFloat(String(s).replace(/[$,]/g,"")); return isFinite(n)&&n>0?n:null; };
-  return rows.filter(r=>g(r,A)||g(r,T)).map((r,i)=>{ const y=parseInt(g(r,Y),10); return mk(i,{artist:g(r,A),title:g(r,T),year:y>1800&&y<2100?y:null,genre:g(r,G)||"Other",coll:g(r,S),from:g(r,F),cost:num(g(r,C)),value:num(g(r,V)),quality:g(r,Q),cover:g(r,CV)}); });
+  return rows.filter(r=>g(r,A)||g(r,T)).map((r,i)=>{ const y=parseInt(g(r,Y),10); return mk(i,{artist:g(r,A),title:g(r,T),year:y>1800&&y<2100?y:null,genre:g(r,G)||"Other",coll:g(r,S),from:g(r,F),cost:num(g(r,C)),...vrange(g(r,V)),quality:g(r,Q),cover:g(r,CV)}); });
 }
 function applyLoad(d,fromCache){
   if(!d||!d.records||d.records.length<2) return false;
@@ -556,7 +571,7 @@ function details(r){
   const p=(async()=>{
     if(!LIVE||!AUTH.pass) return null;
     if(AUTH.legacy){ const old=SDB.prices[r.key]; return old?{lowest:old[1],forSale:old[2],discogs:old[0],suggested:{}}:null; }
-    try{ const d=await api("discogs",{key:r.key,artist:r.artist,album:r.title,year:r.year||""}); if(d&&d.ok){ SDB.details[r.key]=DET_MINE[r.key]=d; return d; } }catch(e){}
+    try{ const d=await api("discogs",{key:r.key,artist:r.artist,album:r.title,year:r.year||""}); if(d&&d.ok){ SDB.details[r.key]=DET_MINE[r.key]=d; if(r.value==null&&d.value) Object.assign(r,vrange(d.value)); return d; } }catch(e){}
     return null;
   })();
   DGASK.set(r.key,p); return p;
@@ -793,21 +808,46 @@ function deckSVG(r){
   </svg>`;
 }
 const GRADES=[["Poor (P)","P"],["Fair (F)","F"],["Good (G)","G"],["Good Plus (G+)","G+"],["Very Good (VG)","VG"],["Very Good Plus (VG+)","VG+"],["Near Mint (NM or M-)","NM"],["Mint (M)","M"]];
-function waveSVG(sug,lowest){
-  const pts=GRADES.map(([k,s],i)=>({s,i,v:sug&&sug[k]!=null?+sug[k]:null})).filter(p=>p.v!=null);
-  if(pts.length<2) return "";
-  const W=300,H=44,lo=Math.min(...pts.map(p=>p.v),lowest?+lowest:Infinity),hi=Math.max(...pts.map(p=>p.v),lowest?+lowest:0)||1;
-  const X=i=>10+i*(W-20)/7, Y=v=>H-12-(hi>lo?(v-lo)/(hi-lo):0.5)*(H-20);
-  let d=`M${X(pts[0].i)} ${Y(pts[0].v)}`;
-  for(let k=1;k<pts.length;k++){ const a=pts[k-1],b=pts[k],mx=(X(a.i)+X(b.i))/2; d+=` C${mx} ${Y(a.v)} ${mx} ${Y(b.v)} ${X(b.i)} ${Y(b.v)}`; }
-  const area=d+` L${X(pts[pts.length-1].i)} ${H-12} L${X(pts[0].i)} ${H-12} Z`;
-  const acc=cssv("--accent","#E0442E");
-  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Suggested Discogs price by condition, from ${money(pts[0].v)} to ${money(pts[pts.length-1].v)}">
-   <path d="${area}" fill="${acc}" opacity=".14"/><path d="${d}" fill="none" stroke="${acc}" stroke-width="2"/>
-   ${pts.map(p=>`<circle cx="${X(p.i)}" cy="${Y(p.v)}" r="2.6" fill="#fff" stroke="${acc}" stroke-width="1.5"><title>${p.s}: ${money(p.v)}</title></circle>`).join("")}
-   ${lowest?`<line x1="10" x2="${W-10}" y1="${Y(+lowest)}" y2="${Y(+lowest)}" stroke="#1B1D21" stroke-dasharray="3 3" stroke-width="1"/>`:""}
-   ${GRADES.map(([k,s],i)=>`<text x="${X(i)}" y="${H-1}" text-anchor="middle" style="font:700 8.5px sans-serif;fill:#4D525B">${s}</text>`).join("")}
-  </svg>`;
+/* The price wave: every copy for sale, cheapest on the left, dearest on the right.
+   eBay copies (when the sheet script has eBay keys) make the wave's shape, one bump per price.
+   Discogs adds its own count, its lowest listing and its suggested price for each condition, on the same price scale. */
+function waveSVG(r,d){
+  const ebay=d&&d.ebay&&d.ebay.p&&d.ebay.p.length>=2?d.ebay.p.map(Number).filter(x=>x>0).sort((a,b)=>a-b):null;
+  const sug=GRADES.map(([k,s])=>({s,v:d&&d.suggested&&d.suggested[k]!=null?+d.suggested[k]:null})).filter(p=>p.v>0);
+  const low=d&&+d.lowest>0?+d.lowest:null, dn=d?+d.forSale||0:0, paid=r&&r.cost?+r.cost:null;
+  if(!ebay&&!sug.length&&!low) return "";
+  const pool=[...(ebay||[]),...sug.map(p=>p.v),...(low?[low]:[]),...(paid?[paid]:[])];
+  let lo=Math.min(...pool), hi=Math.max(...pool), over=0;
+  if(ebay&&ebay.length>=8){ const p95=ebay[Math.floor(ebay.length*0.95)]; const cap=Math.max(p95,...sug.map(p=>p.v),paid||0); over=ebay.filter(x=>x>cap).length; hi=cap; }
+  if(hi-lo<1){ lo=Math.max(0,lo-1); hi=hi+1; }
+  const lo0=lo, hi0=hi, padv=(hi-lo)*0.05; lo=Math.max(0,lo-padv); hi=hi+padv;
+  const W=320,H=82,L=8,R=W-8,base=50,top=6,X=v=>L+(Math.min(v,hi)-lo)/(hi-lo)*(R-L);
+  const acc=cssv("--accent","#E0442E"), ink="#1B1D21", mut="#4D525B";
+  let shape="", n=0;
+  if(ebay){
+    n=ebay.length; const S=64, bw=(hi-lo)/16, ys=[];
+    for(let i=0;i<=S;i++){ const x=lo+(hi-lo)*i/S; let y=0; for(const v of ebay){ const z=(Math.min(v,hi)-x)/bw; y+=Math.exp(-z*z/2); } ys.push(y); }
+    /* height per copy is fixed so a busy record makes a taller wave than a rare one, until it fills the panel */
+    const peak=Math.max(...ys)||1, k=Math.min(7,(base-top)/peak);
+    let p=`M${L} ${base}`; ys.forEach((y,i)=>{ p+=` L${(L+(R-L)*i/S).toFixed(1)} ${(base-y*k).toFixed(1)}`; }); p+=` L${R} ${base} Z`;
+    shape=`<path d="${p}" fill="${acc}" fill-opacity=".22" stroke="${acc}" stroke-width="1.6" stroke-linejoin="round"/>`;
+  } else if(dn&&(sug.length||low)){
+    /* Discogs alone doesn't give each copy's price, so its copies show as one soft hill from its lowest listing to its top suggested price, as tall as the count */
+    const a=X(low||sug[0].v), b=X(Math.max(...sug.map(p=>p.v),low||0)), h=Math.min(base-top,6+Math.log2(1+dn)*6), m=(a+b)/2, w=Math.max(b-a,24);
+    const ha=Math.max(L,m-w/2-10), hb=Math.min(R,m+w/2+10);
+    shape=`<path d="M${ha} ${base} C${m-w/4} ${base} ${m-w/4} ${base-h} ${m} ${base-h} C${m+w/4} ${base-h} ${m+w/4} ${base} ${hb} ${base} Z" fill="${acc}" fill-opacity=".16" stroke="${acc}" stroke-width="1.4" stroke-dasharray="4 3"/>`;
+  }
+  let marks="", lastX=-99;
+  sug.sort((a,b)=>a.v-b.v).forEach(p=>{ const x=X(p.v), show=x-lastX>16; if(show) lastX=x;
+    marks+=`<line x1="${x}" x2="${x}" y1="${base}" y2="${base+5}" stroke="${ink}" stroke-width="1.2"/>`+(show?`<text x="${x}" y="${base+14}" text-anchor="middle" style="font:700 8.5px sans-serif;fill:${mut}">${p.s}</text>`:"")+`<title>Discogs suggests ${money(p.v)} for ${p.s}</title>`; });
+  if(low) marks+=`<circle cx="${X(low)}" cy="${base}" r="3.4" fill="#fff" stroke="${ink}" stroke-width="1.5"><title>Lowest Discogs listing ${money(low)}</title></circle>`;
+  if(paid) marks+=`<path d="M${X(paid)-4} ${top-1} L${X(paid)+4} ${top-1} L${X(paid)} ${top+5} Z" fill="${ink}"><title>You paid ${money(paid)}</title></path><line x1="${X(paid)}" x2="${X(paid)}" y1="${top+5}" y2="${base}" stroke="${ink}" stroke-width="1" stroke-dasharray="2 3"/>`;
+  const fmt=v=>money(v<10?Math.round(v*2)/2:Math.round(v));
+  const axis=`<line x1="${L}" x2="${R}" y1="${base}" y2="${base}" stroke="${ink}" stroke-width="1"/>
+   <text x="${X(lo0)}" y="${H-3}" style="font:700 10px sans-serif;fill:${ink}">${fmt(lo0)}</text>
+   <text x="${X(hi0)}" y="${H-3}" text-anchor="end" style="font:700 10px sans-serif;fill:${ink}">${fmt(hi0)}${over?"+":""}</text>`;
+  const label=(ebay?`${n} copies for sale on eBay, ${fmt(ebay[0])} to ${fmt(ebay[n-1])}. `:"")+(dn?`${dn} for sale on Discogs${low?`, from ${money(low)}`:""}.`:"");
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)}">${shape}${axis}${marks}</svg>`;
 }
 function renderDeck(){
   const box=$("#rb-np"); if(!box) return;
@@ -838,11 +878,17 @@ function metaHTML(r,d){
   return h;
 }
 function moneyHTML(r,d){
-  const v=valueOf(r), disc=d&&d.discogs?`https://www.discogs.com/release/${encodeURIComponent(d.discogs)}`:`https://www.discogs.com/search/?q=${encodeURIComponent(r.artist+" "+r.title)}&type=all`;
-  const wave=d?waveSVG(d.suggested,d.lowest):"";
-  return `<div class="facts"><b>Value ${v?money(v):"not set"}</b>${r.coll?`<span>Collection: ${esc(r.coll)}</span>`:""}${r.from?`<span>Source: ${esc(r.from)}</span>`:""}${r.quality?`<span>${esc(r.quality)}</span>`:""}</div>
-   <div class="wave">${wave||`<div class="cap">${d?"No suggested prices from Discogs for this pressing.":(LIVE?"Checking Discogs prices…":"Discogs prices show on the live page.")}</div>`}
-    <div class="cap">${d&&d.lowest?`Lowest listing <b>${money(d.lowest)}</b> · ${d.forSale||0} for sale · `:""}<a class="lk" href="${disc}" target="_blank" rel="noopener">Discogs</a></div></div>`;
+  const vt=valueText(r), disc=d&&d.discogs?`https://www.discogs.com/release/${encodeURIComponent(d.discogs)}`:`https://www.discogs.com/search/?q=${encodeURIComponent(r.artist+" "+r.title)}&type=all`;
+  const ebay=`https://www.ebay.com/sch/176985/i.html?_nkw=${encodeURIComponent((VARIOUS.test(r.artist)?"":r.artist+" ")+r.title+" vinyl")}`;
+  const wave=d?waveSVG(r,d):"", eb=d&&d.ebay&&d.ebay.n>=2?d.ebay:null;
+  const bits=[];
+  if(eb) bits.push(`<b>${eb.n}</b> on <a class="lk" href="${ebay}" target="_blank" rel="noopener">eBay</a>`);
+  if(d&&(d.forSale||d.lowest)) bits.push(`<b>${d.forSale||0}</b> on <a class="lk" href="${disc}" target="_blank" rel="noopener">Discogs</a>${d.lowest?`, lowest <b>${money(d.lowest)}</b>`:""}`);
+  else bits.push(`<a class="lk" href="${disc}" target="_blank" rel="noopener">Discogs</a>`);
+  const key=wave?`<div class="wkey"><span><i class="kw"></i>${eb?"Copies for sale by price":"Discogs copies"}</span>${d&&d.lowest?`<span><i class="kd"></i>Lowest listing</span>`:""}${Object.keys(d&&d.suggested||{}).length?`<span><i class="kt"></i>Condition price</span>`:""}${r.cost?`<span><i class="kp"></i>You paid ${money(r.cost)}</span>`:""}</div>`:"";
+  return `<div class="facts"><b>Value ${vt||"not set"}</b>${vt&&r.vsrc?`<span class="vsrc">${esc(r.vsrc)}</span>`:""}${r.coll?`<span>Collection: ${esc(r.coll)}</span>`:""}${r.from?`<span>Source: ${esc(r.from)}</span>`:""}${r.quality?`<span>${esc(r.quality)}</span>`:""}</div>
+   <div class="wave">${wave||`<div class="cap">${d?"Discogs has no prices for this pressing yet.":(LIVE?"Checking prices…":"Prices show on the live page.")}</div>`}${key}
+    <div class="cap">For sale now: ${bits.join(" · ")}</div></div>`;
 }
 let DJ=ls("rb-dj")||[];
 function saveDJ(){ ls("rb-dj",DJ); const n=$("#rb-djn"); if(n) n.textContent=DJ.length?` (${DJ.length})`:""; }
@@ -1212,12 +1258,19 @@ function renderManage(){
      <div class="pbar2"><i id="fill-bar"></i></div><div id="fill-note"></div><div><button class="btn sm" id="fill-go">Start filling</button></div>
     </div></details>
    </div></div>
+   <div class="mcol">
+   <div class="panel"><div class="pbar"><span class="glab">Update</span><span class="ptitle">Years and values</span></div><div class="mbody">
+    <div class="note">Sets ${YV_YEARS.length} years to the most likely first release year, and fills every blank Value with its Discogs price range, lowest listing to top condition price. Values you typed yourself stay as they are. It also saves the copies for sale behind each price wave.</div>
+    <div class="note">It takes about 45 minutes for the whole library, so keep this tab open. You can stop and pick up later.</div>
+    <div class="pbar2"><i id="yv-bar"></i></div><div id="yv-note"></div>
+    <div><button class="btn manage" id="yv-go">Update years and values</button></div>
+   </div></div>
    <div class="panel"><div class="pbar"><span class="glab">Remove</span><span class="ptitle">Remove a record</span></div><div class="mbody">
     <input id="rm-q" type="search" placeholder="Search your library" aria-label="Search your library">
     <div class="results" id="rm-results"></div>
     <div id="rm-chosen"></div>
     <div id="rm-msg"></div>
-   </div></div></div>`;
+   </div></div></div></div>`;
   ["genre","coll"].forEach(k=>{ const s=$("#ad-"+k), n=$("#ad-"+k+"-new"); s.onchange=()=>{ n.hidden=s.value!=="__new"; if(!n.hidden) n.focus(); }; });
   const lk=$("#ad-look"), en=()=>{ lk.disabled=!(val("ad-cat")||(val("ad-artist")&&val("ad-album"))); };
   $("#ad-artist").oninput=en; $("#ad-album").oninput=en; $("#ad-cat").oninput=()=>{ catRel=null; en(); };
@@ -1225,6 +1278,8 @@ function renderManage(){
   $("#ad-save").onclick=addSave;
   $("#fill-go").onclick=()=>{ if(!LIVE){ FILL.msg="Fill missing works on the live page."; fillUI(); return; } FILL.on=!FILL.on; FILL.msg=""; if(FILL.on) fillRun(); fillUI(); };
   fillUI();
+  $("#yv-go").onclick=()=>{ if(!LIVE){ YV.msg="This works on the live page."; yvUI(); return; } YV.on=!YV.on; YV.msg=""; if(YV.on) yvRun(); yvUI(); };
+  yvUI();
   rmPick=null; $("#rm-q").oninput=rmSearch; rmSearch();
 }
 function setAuto(id,v){ const e=$("#"+id); if(!e||e.value||v==null||v==="") return; e.value=v; e.classList.add("auto"); e.addEventListener("input",()=>e.classList.remove("auto"),{once:true}); }
@@ -1274,7 +1329,7 @@ async function addLookup(){
   if(hit){ setAuto("ad-cover",hit.artworkUrl100.replace("100x100bb","600x600bb")); setGenre(hit.primaryGenreName); }
   let dg=null; if(!AUTH.legacy){ try{ dg=await api("discogs",{artist,album,year:mine,save:false}); }catch(e){} }
   if(dg&&dg.ok){ addDet=dg; setAuto("ad-styles",dg.styles); setAuto("ad-label",dg.label); setPress(dg.press);
-    const sug=dg.suggested&&(dg.suggested["Very Good Plus (VG+)"]||dg.suggested["Near Mint (NM or M-)"]); setAuto("ad-value",sug||dg.lowest||""); }
+    setAuto("ad-value",dg.value?dg.value.replace(/^\$/,""):(dg.lowest||"")); }
   const rels=await findReleases(artist,album);
   const ys=[...new Set(rels.map(x=>(x.date||"").slice(0,4)).filter(Boolean))].sort();
   if(!mine){ const y=(catRel&&(catRel.date||"").slice(0,4))||(dg&&dg.firstYear)||ys[0]||(hit&&hit.releaseDate&&hit.releaseDate.slice(0,4)); setAuto("ad-year",y); }
@@ -1306,7 +1361,7 @@ async function addSave(){
     if(!d||!d.ok){ alertBox("ad-msg","bad",esc(d&&d.error||"The sheet said no. Check the passcode.")); return; }
     const det={key,artist:row.artist,album:row.album,styles:val("ad-styles"),label:val("ad-label"),press:val("ad-press"),runtime:val("ad-runtime"),discogs:addDet&&addDet.discogs||"",lowest:addDet&&addDet.lowest||"",forSale:addDet&&addDet.forSale||"",suggested:addDet&&addDet.suggested||{}};
     if(!AUTH.legacy&&(det.styles||det.label||det.press||det.runtime)){ api("details",{items:[det]},pass).catch(()=>{}); SDB.details[key]=DET_MINE[key]=det; }
-    const rec=mk(RECS.length,{artist:row.artist,title:row.album,year:+row.year||null,genre:row.genre||"Other",coll:row.collection,from:row.from,cost:null,value:row.value?+row.value:null,quality:row.quality,cover:row.cover});
+    const rec=mk(RECS.length,{artist:row.artist,title:row.album,year:+row.year||null,genre:row.genre||"Other",coll:row.collection,from:row.from,cost:null,...vrange(row.value),quality:row.quality,cover:row.cover});
     RECS.push(rec); if(addInfo) saveInfo(rec,addInfo); flushWrites(); indexHues(); updateCount();
     renderManage(); alertBox("ad-msg","ok",`Added <b>${esc(row.album)}</b> by ${esc(row.artist)} to your library.`);
   }catch(e){ alertBox("ad-msg","bad","Couldn't reach your sheet. Try again in a minute."); }
@@ -1357,6 +1412,45 @@ async function fillRun(){
     FILL.done++; if(FILL.done%10===0) flushWrites(); fillUI();
   }
   FILL.on=false; flushWrites(); fillUI();
+}
+
+/* years and values: corrected years, then Discogs price ranges into blank Value cells, a few records per call */
+const YV_YEARS=[["bobwills|bestofbobwills",1970],["bootsrandolph|yakinsaxman",1964],["captainandtennille|songofjoy",1976],["enochlightandthelightbrigade|spanishstrings",1966],["fleetwoodmac|kilnhouse",1970],["garynuman|pleasureprinciple",1979],["loureed|berlin",1973],["steviewonder|musicofmymind",1972],["tangerinedream|alphacentauriatem",1976],["romantics|romantics",1980],["patboone|patboonesgreatesthits",1975],["patrickcleandenim|radioheartbreak",2011],["beachboys|highwater",1973],["variousartists|goldendaysofbritishrock",1976],["originaldixielandjazzband|originaldixielandjazzband",1970],["fatsdomino|blueberryhill",1988]];
+const VALDONE=ls("rb-val1")||{};
+const YV={on:false,done:0,total:0,ranges:0,lows:0,none:0,years:null,msg:""};
+function yvLeft(){ return RECS.filter(r=>r.value==null&&!VALDONE[r.key]); }
+function yvUI(){
+  const n=$("#yv-note"), bar=$("#yv-bar"), go=$("#yv-go"); if(!n) return;
+  const left=yvLeft().length, yd=ls("rb-yrs1");
+  if(go) go.textContent=YV.on?"Stop":(YV.done||yd?(left?"Keep going":"Run again"):"Update years and values");
+  if(bar) bar.style.width=(YV.total?Math.round(100*YV.done/YV.total):(yd&&!left?100:0))+"%";
+  const yrs=YV.years!=null?`Years: ${YV.years} changed. `:(yd?"Years are done. ":"");
+  n.textContent=YV.msg||(YV.on||YV.done?`${yrs}Values: checked ${YV.done} of ${YV.total}, ${YV.ranges} got a price range`+(YV.lows?`, ${YV.lows} only a lowest price`:"")+(YV.none?`, ${YV.none} not on Discogs`:"")+"."+(YV.on?" Working…":""):`${yrs}${left} records have no Value yet.`);
+}
+async function yvRun(){
+  try{
+    if(!ls("rb-yrs1")){
+      const res=await api("apply",{items:YV_YEARS.map(([key,year])=>({key,year}))});
+      if(!res||!res.ok){ YV.on=false; YV.msg=res&&/unknown action/i.test(res.error||"")?"Your sheet script needs the update first. Paste the new script, redeploy, then press this again.":"Couldn't change the years: "+((res&&res.error)||"no answer")+"."; yvUI(); return; }
+      YV.years=res.years; ls("rb-yrs1",1);
+      const yy=Object.fromEntries(YV_YEARS); RECS.forEach(r=>{ if(yy[r.key]) r.year=yy[r.key]; });
+    }
+    const todo=yvLeft(); YV.total=todo.length; YV.done=0; YV.ranges=0; YV.lows=0; YV.none=0; yvUI();
+    let sugSeen=0, okSeen=0;
+    for(let i=0;i<todo.length&&YV.on;i+=6){
+      const batch=todo.slice(i,i+6);
+      const res=await api("values",{items:batch.map(r=>({key:r.key,artist:r.artist,album:r.title,year:r.year||""}))});
+      if(!res||!res.ok){ YV.on=false; YV.msg=res&&/unknown action/i.test(res.error||"")?"Your sheet script needs the update first. Paste the new script, redeploy, then press this again.":"Stopped: "+((res&&res.error)||"no answer from the sheet")+"."; break; }
+      for(const o of res.done){
+        const r=batch.find(b=>b.key===o.key); VALDONE[o.key]=1; YV.done++;
+        if(!o.ok){ YV.none++; continue; } okSeen++; if(o.sug) sugSeen++;
+        if(o.value&&r){ Object.assign(r,vrange(o.value)); if(r.vhi) YV.ranges++; else YV.lows++; }
+      }
+      ls("rb-val1",VALDONE); yvUI();
+      if(okSeen>=4&&!sugSeen){ YV.on=false; YV.msg="Discogs isn't sending condition prices, so these would only get a lowest price. On discogs.com, fill in your free seller settings (Settings, then Seller Settings; you don't have to list anything), then press Keep going."; break; }
+    }
+  }catch(e){ YV.on=false; YV.msg="Stopped: "+(e.message||e)+". Press Keep going to pick up where it left off."; }
+  YV.on=false; yvUI(); if(typeof renderAll==="function"&&state.mode!=="manage") renderAll();
 }
 
 /* ---------- shell ---------- */
