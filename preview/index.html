@@ -278,10 +278,10 @@ html,body{margin:0;padding:0;background:#F6F5F0}
 #rb .leaf li.hl{background:var(--panel);box-shadow:inset 3px 0 0 var(--accent);font-weight:700}
 
 /* manage records */
-#rb .manage{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:8px;align-items:start}
-#rb .manage .panel{overflow:visible}
+#rb .mgr{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:8px;align-items:start}
+#rb .mgr .panel{overflow:visible}
 #rb .mbody{padding:12px 14px 14px;display:flex;flex-direction:column;gap:12px}
-#rb .manage h2{font:800 22px var(--display);margin:0}
+#rb .mgr h2{font:800 22px var(--display);margin:0}
 #rb .form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px}
 #rb .form label{display:flex;flex-direction:column;gap:3px;font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
 #rb .form label.full{grid-column:1 / -1}
@@ -338,7 +338,7 @@ html,body{margin:0;padding:0;background:#F6F5F0}
   #rb .tlist{max-height:300px}
   #rb .djmode{grid-template-columns:minmax(0,1fr);grid-template-rows:auto 480px}
   #rb .deskscroll{max-height:440px}
-  #rb .manage{grid-template-columns:minmax(0,1fr)}
+  #rb .mgr{grid-template-columns:minmax(0,1fr)}
   #rb .form{grid-template-columns:minmax(0,1fr)}
   #rb .leaves{grid-template-columns:minmax(0,1fr)}
   #rb .leaf.l{border-radius:10px 10px 0 0;border-right:1.5px solid var(--line);border-bottom:1px dashed var(--line)}
@@ -912,15 +912,15 @@ function makeCrate(col,recs){
   function paint(){
     const max=Math.max(0,sc.scrollHeight-sc.clientHeight);
     C.pos=Math.max(0,Math.min(items.length-1,(max-sc.scrollTop)/C.STEP));
-    const lo=Math.max(0,Math.floor(C.pos)-1), hi=Math.min(items.length-1,Math.floor(C.pos)+7), keep=new Set();
+    const lo=Math.max(0,Math.floor(C.pos)-2), hi=Math.min(items.length-1,Math.floor(C.pos)+7), keep=new Set();
     const S=C.S, x=-S/2, base=C.hinge;
     for(let j=lo;j<=hi;j++){
-      const d=j-C.pos; if(d<-1.05) continue; keep.add(j);
+      const d=j-C.pos; if(d<-2) continue; keep.add(j);
       const el=node(j), it=items[j];
       el.style.width=S+"px"; el.style.height=S+"px"; el.style.marginLeft=x+"px";
       let ty=base-S, tx=0, rot=0, z=1000-j, op=1;
       if(d>=0){ ty-=d*S*0.075; tx=d*S*0.035; if(d>6) op=Math.max(0,7-d); }
-      else { rot=-180*Math.min(1,-d); z=2000+j; op=d<-1?Math.max(0,1+(d+1)*20):1; }
+      else { rot=-180*Math.min(1,-d); z=2000+j; op=d<-1.6?Math.max(0,(d+2)/0.4):1; }
       if(it.r&&state.now===it.r.i) ty-=S*0.16;
       el.style.top="0px"; el.style.zIndex=z; el.style.opacity=op;
       el.style.transform=`translate(${tx.toFixed(1)}px,${ty.toFixed(1)}px) rotateX(${rot.toFixed(1)}deg)`;
@@ -1161,7 +1161,7 @@ function alertBox(id,kind,t){ const e=$("#"+id); if(e) e.innerHTML=t?`<div class
 function renderManage(){
   if(AUTH.role!=="admin"){ state.mode="dig"; renderAll(); return; }
   const genres=[...new Set(RECS.map(r=>r.genre))].sort(), colls=[...new Set(RECS.map(r=>r.coll).filter(Boolean))].sort();
-  $("#rb-main").innerHTML=`<div class="manage">
+  $("#rb-main").innerHTML=`<div class="mgr">
    <div class="panel"><div class="pbar"><span class="glab">Add</span><span class="ptitle">Add a record</span></div><div class="mbody">
     <div class="form">
      <label>Artist<input id="ad-artist" autocomplete="off"></label>
