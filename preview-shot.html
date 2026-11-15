@@ -6,7 +6,7 @@ try{localStorage.setItem("rb-pass",JSON.stringify("preview"));localStorage.setIt
 window.fetch=function(u,o){u=String(u);var b={};try{b=o&&o.body?JSON.parse(o.body):{}}catch(e){}
  var res={ok:true};
  if(/script\.google/.test(u)){ if(b.action==="load") res=LOAD; else if(b.action==="auth") res={ok:true,role:"admin"};
-   else if(b.action==="discogs") res=b.key==="christophercross|christophercross"?{ok:true,lowest:1.21,forSale:28,suggested:{}}:{ok:false}; }
+   else if(b.action==="discogs") res=b.key==="christophercross|christophercross"?{ok:true,lowest:1.21,forSale:28,value:"$1–$12 (Discogs)",suggested:{"Good (G)":2.5,"Very Good (VG)":4,"Very Good Plus (VG+)":7,"Near Mint (NM or M-)":12},ebay:{n:34,p:[3,4,4,5,5,5,6,6,6,6,7,7,7,8,8,8,9,9,10,10,10,11,12,12,13,14,15,15,16,18,20,22,25,38]}}:{ok:false}; }
  else res={results:[],releases:[],"release-groups":[]};
  return Promise.resolve({ok:true,status:200,json:function(){return Promise.resolve(res)},text:function(){return Promise.resolve(JSON.stringify(res))}});};
 window.addEventListener("load",function(){setTimeout(function(){var R=document.getElementById("rb")._rb;var st=R.st();st.bin="Soft Rock";R.renderAll();
