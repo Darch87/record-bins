@@ -1417,7 +1417,7 @@ async function fillRun(){
 
 /* years and values: corrected years, then Discogs price ranges into blank Value cells, a few records per call */
 const YV_YEARS=[["bobwills|bestofbobwills",1970],["bootsrandolph|yakinsaxman",1964],["captainandtennille|songofjoy",1976],["enochlightandthelightbrigade|spanishstrings",1966],["fleetwoodmac|kilnhouse",1970],["garynuman|pleasureprinciple",1979],["loureed|berlin",1973],["steviewonder|musicofmymind",1972],["tangerinedream|alphacentauriatem",1976],["romantics|romantics",1980],["patboone|patboonesgreatesthits",1975],["patrickcleandenim|radioheartbreak",2011],["beachboys|highwater",1973],["variousartists|goldendaysofbritishrock",1976],["originaldixielandjazzband|originaldixielandjazzband",1970],["fatsdomino|blueberryhill",1988]];
-const VALDONE=ls("rb-val1")||{};
+const VALDONE=ls("rb-val1")||{}, EBDONE=ls("rb-eb1")||{};
 const YV={on:false,done:0,total:0,ranges:0,lows:0,none:0,years:null,msg:""};
 function yvLeft(){ return RECS.filter(r=>r.value==null&&!VALDONE[r.key]); }
 function yvUI(){
@@ -1426,7 +1426,7 @@ function yvUI(){
   if(go) go.textContent=YV.on?"Stop":(YV.done||yd?(left?"Keep going":"Run again"):"Update years and values");
   if(bar) bar.style.width=(YV.total?Math.round(100*YV.done/YV.total):(yd&&!left?100:0))+"%";
   const yrs=YV.years!=null?`Years: ${YV.years} changed. `:(yd?"Years are done. ":"");
-  n.textContent=YV.msg||(YV.on||YV.done?`${yrs}Values: checked ${YV.done} of ${YV.total}, ${YV.ranges} got a price range`+(YV.lows?`, ${YV.lows} only a lowest price`:"")+(YV.none?`, ${YV.none} not on Discogs`:"")+"."+(YV.on?" Working…":""):`${yrs}${left} records have no Value yet.`);
+  n.textContent=YV.msg||(YV.on||YV.done?`${yrs}Values: checked ${YV.done} of ${YV.total}, ${YV.ranges} got a price range`+(YV.lows?`, ${YV.lows} only a lowest price`:"")+(YV.none?`, ${YV.none} not on Discogs`:"")+"."+(YV.ebTotal?` eBay copies: ${YV.ebDone} of ${YV.ebTotal}.`:"")+(YV.on?" Working…":""):`${yrs}${left} records have no Value yet.`);
 }
 async function yvRun(){
   try{
@@ -1443,12 +1443,24 @@ async function yvRun(){
       const res=await api("values",{items:batch.map(r=>({key:r.key,artist:r.artist,album:r.title,year:r.year||""}))});
       if(!res||!res.ok){ YV.on=false; YV.msg=res&&/unknown action/i.test(res.error||"")?"Your sheet script needs the update first. Paste the new script, redeploy, then press this again.":"Stopped: "+((res&&res.error)||"no answer from the sheet")+"."; break; }
       for(const o of res.done){
-        const r=batch.find(b=>b.key===o.key); VALDONE[o.key]=1; YV.done++;
+        const r=batch.find(b=>b.key===o.key); VALDONE[o.key]=1; if(o.ebay!=null) EBDONE[o.key]=1; YV.done++;
         if(!o.ok){ YV.none++; continue; } okSeen++; if(o.sug) sugSeen++;
         if(o.value&&r){ Object.assign(r,vrange(o.value)); if(r.vhi) YV.ranges++; else YV.lows++; }
       }
-      ls("rb-val1",VALDONE); yvUI();
+      ls("rb-val1",VALDONE); ls("rb-eb1",EBDONE); yvUI();
+      if(res.ebay) YV.ebay=true;
       if(okSeen>=4&&!sugSeen){ YV.on=false; YV.msg="Discogs isn't sending condition prices, so these would only get a lowest price. On discogs.com, fill in your free seller settings (Settings, then Seller Settings; you don't have to list anything), then press Keep going."; break; }
+    }
+    /* eBay top-up for records looked up before the eBay keys were added */
+    const eb=YV.on?RECS.filter(r=>VALDONE[r.key]&&!EBDONE[r.key]&&!(SDB.details[r.key]&&SDB.details[r.key].ebay)):[];
+    if(eb.length){ YV.ebTotal=eb.length; YV.ebDone=0; yvUI();
+      for(let i=0;i<eb.length&&YV.on;i+=10){
+        const batch=eb.slice(i,i+10);
+        const res=await api("ebayfill",{items:batch.map(r=>({key:r.key,artist:r.artist,album:r.title}))});
+        if(!res||!res.ok){ if(res&&/eBay keys/i.test(res.error||"")){ YV.ebTotal=0; break; } YV.on=false; YV.msg=res&&/unknown action/i.test(res.error||"")?"Your sheet script needs the update first. Paste the new script, redeploy, then press this again.":"Stopped: "+((res&&res.error)||"no answer from the sheet")+"."; break; }
+        for(const o of res.done){ EBDONE[o.key]=1; YV.ebDone++; if(SDB.details[o.key]) delete SDB.details[o.key]; }
+        ls("rb-eb1",EBDONE); yvUI();
+      }
     }
   }catch(e){ YV.on=false; YV.msg="Stopped: "+(e.message||e)+". Press Keep going to pick up where it left off."; }
   YV.on=false; yvUI(); if(typeof renderAll==="function"&&state.mode!=="manage") renderAll();
