@@ -932,7 +932,12 @@ function makeCrate(col,recs){
   }
   C.paint=paint;
   size(); sc.scrollTop=sc.scrollHeight;
-  let raf=0; sc.addEventListener("scroll",()=>{ if(!raf) raf=requestAnimationFrame(()=>{ raf=0; paint(); }); },{passive:true});
+  let raf=0, snapT=0, snapping=false;
+  sc.addEventListener("scroll",()=>{ if(!raf) raf=requestAnimationFrame(()=>{ raf=0; paint(); });
+    clearTimeout(snapT); if(snapping){ snapping=false; return; }
+    snapT=setTimeout(()=>{ const k=Math.round(C.pos); if(Math.abs(k-C.pos)>0.02){ snapping=true; C.goTo(k); } },180); },{passive:true});
+  /* keep the same record in front when the crate changes size */
+  if(window.ResizeObserver){ let lastH=0; new ResizeObserver(()=>{ const h=sc.clientHeight; if(!h||h===lastH) return; const keepPos=C.pos; lastH=h; size(); stage.style.perspective=(C.S*5)+"px"; stage.style.perspectiveOrigin=`50% ${C.hinge}px`; C.goTo(Math.round(keepPos)); paint(); }).observe(sc); }
   stage.style.perspective=(C.S*5)+"px"; stage.style.perspectiveOrigin=`50% ${C.hinge}px`;
   paint();
   C.goTo=j=>{ const max=Math.max(0,sc.scrollHeight-sc.clientHeight); sc.scrollTop=max-j*C.STEP; };
@@ -941,7 +946,7 @@ function makeCrate(col,recs){
     if(el.classList.contains("rec")) play(+el.dataset.i); });
   stage.addEventListener("keydown",e=>{ if(e.key==="Enter"){ const el=e.target.closest(".card.rec"); if(el) play(+el.dataset.i); } });
   sc.addEventListener("keydown",e=>{ if(e.key==="ArrowUp"||e.key==="ArrowDown"){ e.preventDefault(); C.goTo(Math.round(C.pos)+(e.key==="ArrowUp"?1:-1)); } });
-  C.resize=()=>{ size(); paint(); };
+  C.resize=()=>{ const k=Math.round(C.pos); size(); C.goTo(k); paint(); };
   return C;
 }
 
