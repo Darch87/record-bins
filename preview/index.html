@@ -1161,7 +1161,7 @@ function openGate(r){
 /* ---------- Manage Records (admin only): add, remove, fill missing ---------- */
 const QUALITY=["","Mint (M)","Near Mint (NM)","Very Good Plus (VG+)","Very Good (VG)","Good (G)","Fair or Poor"];
 const GENRE_MAP={"R&B/Soul":"Soul/R&B","Soul":"Soul/R&B","R&B":"Soul/R&B","Singer/Songwriter":"Singer-Songwriter","Dance":"Funk/Disco","Disco":"Funk/Disco","Funk":"Funk/Disco","Alternative":"Indie","Christmas":"Holiday","Holiday":"Holiday","Comedy":"Comedy/Spoken Word","Spoken Word":"Comedy/Spoken Word","Children's Music":"Children's","Vocal":"Easy Listening","Hip-Hop/Rap":"Hip-Hop","Soundtrack":"Soundtrack","Hard Rock":"Hard Rock","Progressive":"Prog Rock","Electronica":"Electronic"};
-let addInfo=null, addDet=null, rmPick=null;
+let addInfo=null, addDet=null, rmPick=null, catRel=null;
 function alertBox(id,kind,t){ const e=$("#"+id); if(e) e.innerHTML=t?`<div class="alert ${kind}" role="status">${t}</div>`:""; }
 function renderManage(){
   if(AUTH.role!=="admin"){ state.mode="dig"; renderAll(); return; }
@@ -1169,6 +1169,7 @@ function renderManage(){
   $("#rb-main").innerHTML=`<div class="mgr">
    <div class="panel"><div class="pbar"><span class="glab">Add</span><span class="ptitle">Add a record</span></div><div class="mbody">
     <div class="form">
+     <label class="full">Catalog number<input id="ad-cat" autocomplete="off" placeholder="Optional. On the spine or center label, like SD 19104"></label>
      <label>Artist<input id="ad-artist" autocomplete="off"></label>
      <label>Album<input id="ad-album" autocomplete="off"></label>
      <button class="btn lookbtn" id="ad-look" disabled>Look up fields</button>
@@ -1185,7 +1186,8 @@ function renderManage(){
      <label class="full">Cover picture link<input id="ad-cover" placeholder="Fills itself if blank"></label>
     </div>
     <div id="ad-years" class="chips"></div>
-    <div class="note" id="ad-found">Type the artist and album, then Look up fields. Blank fields fill themselves, and you can change any of them.</div>
+    <div id="ad-cats" class="chips"></div>
+    <div class="note" id="ad-found">Type the catalog number, or the artist and album, then Look up fields. Blank fields fill themselves, and you can change any of them.</div>
     <div class="passnote">Your admin passcode is required to add or remove a record.</div>
     <div class="savebar"><input id="ad-pass" type="password" autocomplete="current-password" placeholder="Passcode" aria-label="Passcode" style="width:170px" value="${esc(AUTH.pass)}"><button class="btn manage" id="ad-save">Add to Library</button></div>
     <div id="ad-msg"></div>
@@ -1201,9 +1203,9 @@ function renderManage(){
     <div id="rm-msg"></div>
    </div></div></div>`;
   ["genre","coll"].forEach(k=>{ const s=$("#ad-"+k), n=$("#ad-"+k+"-new"); s.onchange=()=>{ n.hidden=s.value!=="__new"; if(!n.hidden) n.focus(); }; });
-  const lk=$("#ad-look"), en=()=>{ lk.disabled=!(val("ad-artist")&&val("ad-album")); };
-  $("#ad-artist").oninput=en; $("#ad-album").oninput=en;
-  addInfo=null; addDet=null; lk.onclick=addLookup;
+  const lk=$("#ad-look"), en=()=>{ lk.disabled=!(val("ad-cat")||(val("ad-artist")&&val("ad-album"))); };
+  $("#ad-artist").oninput=en; $("#ad-album").oninput=en; $("#ad-cat").oninput=()=>{ catRel=null; en(); };
+  addInfo=null; addDet=null; catRel=null; lk.onclick=addLookup;
   $("#ad-save").onclick=addSave;
   $("#fill-go").onclick=()=>{ if(!LIVE){ FILL.msg="Fill missing works on the live page."; fillUI(); return; } FILL.on=!FILL.on; FILL.msg=""; if(FILL.on) fillRun(); fillUI(); };
   fillUI();
@@ -1214,9 +1216,43 @@ function setGenre(g){ if(!g) return; const s=$("#ad-genre"); if(!s||s.value!=="_
   let o=[...s.options].find(o=>o.value.toLowerCase()===g.toLowerCase()); if(!o){ o=document.createElement("option"); o.textContent=g; s.insertBefore(o,s.lastChild); }
   s.value=o.value; s.classList.add("auto"); }
 function setPress(p){ const s=$("#ad-press"); if(s&&!s.value&&p){ s.value=p; s.classList.add("auto"); } }
+/* catalog number: MusicBrainz knows the catalog number of each pressing */
+const credit=x=>(x["artist-credit"]||[]).map(c=>c.name+(c.joinphrase||"")).join("");
+async function catLookup(cat){
+  const tight=cat.replace(/[\s\-.]/g,"");
+  const qy=`catno:${qq(cat)}`+(tight!==cat?` OR catno:${qq(tight)}`:"");
+  const d=await mbGet(`${MB}release?query=${encodeURIComponent(qy)}&fmt=json&limit=15`);
+  const want=norm(cat).replace(/^0+/,"");
+  return ((d&&d.releases)||[]).filter(x=>(x["label-info"]||[]).some(l=>norm(l["catalog-number"]||"").replace(/^0+/,"")===want));
+}
+function useCatRel(x){
+  catRel=x; $("#ad-cats").innerHTML="";
+  const a=$("#ad-artist"), b=$("#ad-album");
+  if(!a.value){ a.value=credit(x); a.classList.add("auto"); }
+  if(!b.value){ b.value=x.title||""; b.classList.add("auto"); }
+  const li=(x["label-info"]||[]).find(l=>l.label&&l.label.name); if(li) setAuto("ad-label",li.label.name);
+  $("#ad-look").disabled=false;
+}
 async function addLookup(){
-  const artist=val("ad-artist"), album=val("ad-album"); if(!artist||!album) return false;
   if(!LIVE){ $("#ad-found").textContent="Look up works on the live page."; return false; }
+  const cat=val("ad-cat");
+  if(cat&&!catRel){
+    $("#ad-found").textContent="Looking up the catalog number…";
+    const hits=await catLookup(cat);
+    if(!hits.length){ $("#ad-found").textContent="No pressing found with that catalog number. Check it, or type the artist and album."; if(!(val("ad-artist")&&val("ad-album"))) return false; }
+    else{
+      const aa=norm(val("ad-artist")), list=aa?hits.filter(x=>norm(credit(x)).includes(aa)||aa.includes(norm(credit(x)))):hits;
+      const pool=list.length?list:hits, titles=[...new Set(pool.map(x=>norm(credit(x))+"|"+norm(x.title)))];
+      if(titles.length>1){
+        $("#ad-found").textContent="More than one record has that catalog number. Pick yours:";
+        $("#ad-cats").innerHTML=pool.slice(0,6).map((x,i)=>`<button class="btn sm" data-c="${i}">${esc(credit(x))}, ${esc(x.title)}${x.date?" ("+esc(x.date.slice(0,4))+")":""}</button>`).join("");
+        $$("#ad-cats [data-c]").forEach(bt=>bt.onclick=()=>{ useCatRel(pool[+bt.dataset.c]); addLookup(); });
+        return false;
+      }
+      useCatRel(pool.find(x=>(x.media||[]).some(m=>/vinyl/i.test(m.format||"")))||pool[0]);
+    }
+  }
+  const artist=val("ad-artist"), album=val("ad-album"); if(!artist||!album) return false;
   const f=$("#ad-found"), mine=val("ad-year"); f.textContent="Looking it up…";
   const hit=await itunesHit({artist,title:album});
   if(hit){ setAuto("ad-cover",hit.artworkUrl100.replace("100x100bb","600x600bb")); setGenre(hit.primaryGenreName); }
@@ -1225,15 +1261,16 @@ async function addLookup(){
     const sug=dg.suggested&&(dg.suggested["Very Good Plus (VG+)"]||dg.suggested["Near Mint (NM or M-)"]); setAuto("ad-value",sug||dg.lowest||""); }
   const rels=await findReleases(artist,album);
   const ys=[...new Set(rels.map(x=>(x.date||"").slice(0,4)).filter(Boolean))].sort();
-  if(!mine){ const y=(dg&&dg.firstYear)||ys[0]||(hit&&hit.releaseDate&&hit.releaseDate.slice(0,4)); setAuto("ad-year",y); }
+  if(!mine){ const y=(catRel&&(catRel.date||"").slice(0,4))||(dg&&dg.firstYear)||ys[0]||(hit&&hit.releaseDate&&hit.releaseDate.slice(0,4)); setAuto("ad-year",y); }
   $("#ad-years").innerHTML=!mine&&ys.length>1?`<span class="lab" style="width:100%">Other years it came out:</span>`+ys.map(y=>`<button class="btn sm" data-y="${y}">${y}</button>`).join(""):"";
   $$("#ad-years [data-y]").forEach(b=>b.onclick=()=>{ $("#ad-year").value=b.dataset.y; $$("#ad-years [data-y]").forEach(x=>x.classList.toggle("on",x===b)); });
-  const rel=bestRelease(rels,val("ad-year"));
+  const rel=catRel||bestRelease(rels,val("ad-year"));
+  if(catRel&&!val("ad-cover")){ const u=`https://coverartarchive.org/release/${catRel.id}/front-500`; if(await new Promise(ok=>{ const im=new Image(); im.onload=()=>ok(true); im.onerror=()=>ok(false); setTimeout(()=>ok(false),12000); im.src=u; })) setAuto("ad-cover",u); }
   addInfo=rel?await releaseInfo(rel.id):null;
   if(addInfo){ const tot=[].concat(...addInfo.sides.map(s=>s.tracks)).reduce((a,t)=>a+(t.len||0),0); if(tot) setAuto("ad-runtime",fmtLen(tot)); }
   if(dg&&dg.ok) setAuto("ad-runtime",dg.runtime);
   const n=addInfo?addInfo.sides.reduce((a,s)=>a+s.tracks.length,0):0;
-  const got=[hit&&"cover and genre",dg&&dg.ok&&"Discogs details",n&&`${n} tracks`].filter(Boolean);
+  const got=[catRel&&"pressing from the catalog number",hit&&"cover and genre",dg&&dg.ok&&"Discogs details",n&&`${n} tracks`].filter(Boolean);
   f.textContent=got.length?`Found the ${got.join(", ")}. Check the fields, then Add to Library.`:"Nothing found. Check the spelling, or fill it in yourself.";
   return got.length>0;
 }
