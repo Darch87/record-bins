@@ -589,6 +589,20 @@ async function itunesHit(r){
   const hit=(d.results||[]).find(x=>norm(x.artistName).includes(want.slice(0,8))&&norm(x.collectionName).startsWith(t.slice(0,6)))||(d.results||[]).find(x=>norm(x.collectionName).startsWith(t.slice(0,8)));
   return HITS[k]=hit||0;
 }
+/* second cover source: the Cover Art Archive, through a strict MusicBrainz match */
+async function caaCover(r){
+  const q=`releasegroup:${qq(r.title)}`+(r.artist&&!VARIOUS.test(r.artist)?` AND artist:${qq(r.artist)}`:"");
+  const d=await mbGet(`${MB}release-group?query=${encodeURIComponent(q)}&fmt=json&limit=8`); if(!d) return null;
+  const t=norm(r.title), a=norm(r.artist), va=VARIOUS.test(r.artist||"");
+  const ok=x=>{ const xt=norm(x.title), xa=norm((x["artist-credit"]||[]).map(c=>c.name+(c.joinphrase||"")).join(""));
+    const tOK=xt===t||(Math.min(xt.length,t.length)>=6&&(xt.startsWith(t)||t.startsWith(xt)));
+    const aOK=va||(xa.length>0&&a.length>0&&(xa.includes(a.slice(0,8))||a.includes(xa.slice(0,8))));
+    return tOK&&aOK; };
+  const hit=(d["release-groups"]||[]).find(ok); if(!hit) return 0;
+  const u=`https://coverartarchive.org/release-group/${hit.id}/front-500`;
+  return await new Promise(res=>{ const im=new Image(); let done=false; const fin=v=>{ if(!done){ done=true; res(v); } };
+    im.onload=()=>fin(u); im.onerror=()=>fin(0); setTimeout(()=>fin(0),15000); im.src=u; });
+}
 async function itunesCover(r){ const h=await itunesHit(r); return h?h.artworkUrl100.replace("100x100bb","600x600bb"):h; }
 async function pump(){
   if(cbusy||!cq.length) return; cbusy=true;
@@ -1319,10 +1333,10 @@ function rmChosen(){
   };
 }
 /* fill missing tracklists and covers (runs in this browser, saves to the sheet) */
-const TRIED=ls("rb-tried")||{};
+const TRIED=ls("rb-tried")||{}, CAAT=ls("rb-caa")||{};
 const FILL={on:false,done:0,total:0,found:0,cov:0,msg:""};
 function needT(r){ return !(SDB.tracks[r.key]&&SDB.tracks[r.key].length)&&!TRIED[r.key]; }
-function needC(r){ return !r.cover&&COVERS[r.key]===undefined; }
+function needC(r){ return !r.cover&&(COVERS[r.key]===undefined||(!COVERS[r.key]&&!CAAT[r.key])); }
 function fillUI(){
   const n=$("#fill-note"), bar=$("#fill-bar"), go=$("#fill-go"); if(!n) return;
   const left=RECS.filter(r=>needT(r)||needC(r)).length;
@@ -1335,7 +1349,9 @@ async function fillRun(){
   for(const r of todo){
     if(!FILL.on) break;
     if(needT(r)){ const info=await lookup(r); if(info&&info.sides&&info.sides.length) FILL.found++; else { TRIED[r.key]=1; ls("rb-tried",TRIED); } }
-    if(needC(r)&&FILL.on){ const url=await itunesCover(r); if(url!==null){ COVERS[r.key]=url; ls("rb-covers",COVERS); if(url){ FILL.cov++; queueWrite("covers",{key:r.key,artist:r.artist,album:r.title,cover:url}); } } await wait(1500); }
+    if(needC(r)&&FILL.on){ let url=COVERS[r.key]===undefined?await itunesCover(r):0;
+      if(url===0||url===""){ const c=await caaCover(r); if(c!==null){ CAAT[r.key]=1; ls("rb-caa",CAAT); if(c) url=c; } }
+      if(url!==null){ COVERS[r.key]=url; ls("rb-covers",COVERS); if(url){ FILL.cov++; queueWrite("covers",{key:r.key,artist:r.artist,album:r.title,cover:url}); } } await wait(1500); }
     FILL.done++; if(FILL.done%10===0) flushWrites(); fillUI();
   }
   FILL.on=false; flushWrites(); fillUI();
@@ -1441,7 +1457,7 @@ async function init(){
   const before=sig(cached);
   if(cached&&applyLoad(cached,true)) start(); else status("Opening the store…",0);
   try{
-    const d=await loadAll(); status("");
+    const d=await loadAll(); status(""); updateCount();
     if(!started) start();
     else if(sig(d)!==before){ const keepScroll=$("#rb-bscroll")?$("#rb-bscroll").scrollTop:0; $("#rb-nav").innerHTML=navHTML(); bindNav(); renderAll(); const sc=$("#rb-bscroll"); if(sc) sc.scrollTop=keepScroll; }
   }catch(e){
