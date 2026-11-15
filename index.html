@@ -1417,9 +1417,9 @@ async function fillRun(){
 
 /* years and values: corrected years, then Discogs price ranges into blank Value cells, a few records per call */
 const YV_YEARS=[["bobwills|bestofbobwills",1970],["bootsrandolph|yakinsaxman",1964],["captainandtennille|songofjoy",1976],["enochlightandthelightbrigade|spanishstrings",1966],["fleetwoodmac|kilnhouse",1970],["garynuman|pleasureprinciple",1979],["loureed|berlin",1973],["steviewonder|musicofmymind",1972],["tangerinedream|alphacentauriatem",1976],["romantics|romantics",1980],["patboone|patboonesgreatesthits",1975],["patrickcleandenim|radioheartbreak",2011],["beachboys|highwater",1973],["variousartists|goldendaysofbritishrock",1976],["originaldixielandjazzband|originaldixielandjazzband",1970],["fatsdomino|blueberryhill",1988]];
-const VALDONE=ls("rb-val2")||{}, EBDONE=ls("rb-eb1")||{};
+const VALDONE=ls("rb-val2")||{}, EBDONE=ls("rb-eb1")||{}, LOWDONE=ls("rb-low1")||{};
 const YV={on:false,done:0,total:0,ranges:0,lows:0,none:0,years:null,msg:""};
-function yvLeft(){ return RECS.filter(r=>r.value==null&&!VALDONE[r.key]); }
+function yvLeft(){ return RECS.filter(r=>(r.value==null&&!VALDONE[r.key])||(!r.vhi&&/discogs lowest/i.test(r.vsrc||"")&&!LOWDONE[r.key])); }
 function yvUI(){
   const n=$("#yv-note"), bar=$("#yv-bar"), go=$("#yv-go"); if(!n) return;
   const left=yvLeft().length, yd=ls("rb-yrs1");
@@ -1445,15 +1445,17 @@ async function yvRun(){
       for(const o of res.done){
         const r=batch.find(b=>b.key===o.key), nf=!o.ok&&/not found/i.test(o.error||"");
         if(!o.ok&&!nf){ errs.push(o.error||"no answer"); continue; }
-        VALDONE[o.key]=1; if(o.ebay!=null) EBDONE[o.key]=1; YV.done++;
+        if(o.sugErr){ errs.push(o.sugErr); continue; }
+        VALDONE[o.key]=1; LOWDONE[o.key]=1; if(o.ebay!=null) EBDONE[o.key]=1; YV.done++;
         if(!o.ok){ YV.none++; nfKeys.push(o.key); continue; } okSeen++; if(o.sug) sugSeen++;
-        if(o.value&&r){ Object.assign(r,vrange(o.value)); if(r.vhi) YV.ranges++; else YV.lows++; }
+        if(o.value&&r&&(r.value==null||/\(Discogs\)$/.test(o.value))) Object.assign(r,vrange(o.value));
+        if(o.value){ if(/\(Discogs\)$/.test(o.value)) YV.ranges++; else YV.lows++; }
       }
-      ls("rb-val2",VALDONE); ls("rb-eb1",EBDONE); yvUI();
+      ls("rb-val2",VALDONE); ls("rb-eb1",EBDONE); ls("rb-low1",LOWDONE); yvUI();
       if(res.ebay) YV.ebay=true;
-      if(errs.length){ YV.on=false; YV.msg="Stopped: "+errs[0]+(errs[0].endsWith(".")?"":".")+" Nothing was skipped; press Keep going after fixing it."; break; }
+      if(errs.length){ YV.on=false; YV.msg="Stopped: "+errs[0]+(errs[0].endsWith(".")?"":".")+" Nothing was skipped. Send Claude this line."; break; }
       if(YV.done>=24&&!okSeen){ nfKeys.forEach(k=>delete VALDONE[k]); ls("rb-val2",VALDONE); YV.on=false; YV.msg="Stopped: the first "+YV.done+" records all came back not found on Discogs, which points to a problem, not your records. Send Claude this line."; break; }
-      if(okSeen>=4&&!sugSeen){ YV.on=false; YV.msg="Discogs isn't sending condition prices, so these would only get a lowest price. On discogs.com, fill in your free seller settings (Settings, then Seller Settings; you don't have to list anything), then press Keep going."; break; }
+
     }
     /* eBay top-up for records looked up before the eBay keys were added */
     const eb=YV.on?RECS.filter(r=>VALDONE[r.key]&&!EBDONE[r.key]&&!(SDB.details[r.key]&&SDB.details[r.key].ebay)):[];
