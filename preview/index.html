@@ -424,11 +424,11 @@ let HUE={};
 function indexHues(){ HUE={}; const n={}; RECS.forEach(r=>n[r.genre]=(n[r.genre]||0)+1); Object.keys(n).sort((a,b)=>n[b]-n[a]).forEach((g,k)=>HUE[g]=Math.round((k*137.5)%360)); }
 function hueOf(r){ const b=(r.genre in HUE)?HUE[r.genre]:200; return (b+(hash(r.key)%40)-20+360)%360; }
 function sleeve(r){
-  const h=hash(r.artist+"|"+r.title), hue=hueOf(r), L=["L1","L2","L3","L4"][h%4], dark=(h>>3)%3===0;
-  const s1=dark?`hsl(${hue} 38% 20%)`:`hsl(${hue} 62% ${70+((h>>5)%14)}%)`;
-  const s2=dark?`hsl(${(hue+40)%360} 70% 58%)`:`hsl(${(hue+180)%360} 55% ${32+((h>>7)%18)}%)`;
+  const h=hash(r.artist+"|"+r.title), hue=hueOf(r), L=["L1","L2","L3","L4"][h%4], dark=(h>>>3)%3===0;
+  const s1=dark?`hsl(${hue} 38% 20%)`:`hsl(${hue} 62% ${70+((h>>>5)%14)}%)`;
+  const s2=dark?`hsl(${(hue+40)%360} 70% 58%)`:`hsl(${(hue+180)%360} 55% ${32+((h>>>7)%18)}%)`;
   const s3=dark?`hsl(${hue} 30% 94%)`:`hsl(${hue} 60% 12%)`;
-  return `<div class="sleeve ${L}" data-i="${r.i}" style="--s1:${s1};--s2:${s2};--s3:${s3};--ang:${(h>>9)%180}deg"><div class="art"></div><div class="t a">${esc(r.artist||"Unknown")}</div><div class="t n">${esc(r.title)}</div></div>`;
+  return `<div class="sleeve ${L}" data-i="${r.i}" style="--s1:${s1};--s2:${s2};--s3:${s3};--ang:${(h>>>9)%180}deg"><div class="art"></div><div class="t a">${esc(r.artist||"Unknown")}</div><div class="t n">${esc(r.title)}</div></div>`;
 }
 function backColor(r){ const c=COLORS[r.key]; return c&&c[0]?c[0]:`hsl(${hueOf(r)} 40% 42%)`; }
 function backFace(r){
@@ -999,9 +999,9 @@ function wallList(){
   return recs.sort(cmp);
 }
 function posterHTML(l,idx){
-  const h=hash(l.name+"|"+l.by), [bg,ink]=POSTER_COLORS[h%POSTER_COLORS.length], pats=Object.keys(PATTERNS), pat=PATTERNS[pats[(h>>4)%pats.length]](ink);
+  const h=hash(l.name+"|"+l.by), [bg,ink]=POSTER_COLORS[h%POSTER_COLORS.length], pats=Object.keys(PATTERNS), pat=PATTERNS[pats[(h>>>4)%pats.length]](ink);
   const sticker=h%3===0, id="L"+idx, n=l.items.length;
-  return `<button class="poster${sticker?" sticker":""}${state.list===id?" on":""}" data-list="${id}" style="--pbg:${bg};--pink:${ink};--ppat:${pat};--r:${((h>>8)%7)-3}deg" aria-pressed="${state.list===id}"><b>${esc(l.name)}</b><small>${n} track${n===1?"":"s"}</small></button>`;
+  return `<button class="poster${sticker?" sticker":""}${state.list===id?" on":""}" data-list="${id}" style="--pbg:${bg};--pink:${ink};--ppat:${pat};--r:${((h>>>8)%7)-3}deg" aria-pressed="${state.list===id}"><b>${esc(l.name)}</b><small>${n} track${n===1?"":"s"}</small></button>`;
 }
 function boardHTML(){
   const items=listItems(); if(!items) return "";
