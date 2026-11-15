@@ -502,7 +502,9 @@ window.addEventListener("pagehide",flushWrites);
 const MB="https://musicbrainz.org/ws/2/";
 const INFO=ls("rb-info")||{};
 let mbChain=Promise.resolve();
-function mbGet(url){ const p=mbChain.then(()=>fetch(url,{headers:{Accept:"application/json"}}).then(r=>r.ok?r.json():null).catch(()=>null)); mbChain=p.then(()=>wait(1100)); return p; }
+/* MusicBrainz allows about one call a second; when it says "busy" (503), wait and try again */
+async function mbTry(url){ for(let t=0;t<3;t++){ try{ const r=await fetch(url,{headers:{Accept:"application/json"}}); if(r.status===503){ await wait(2500*(t+1)); continue; } return r.ok?await r.json():null; }catch(e){ await wait(2000); } } return null; }
+function mbGet(url){ const p=mbChain.then(()=>mbTry(url)); mbChain=p.then(()=>wait(1100)); return p; }
 function qq(s){ return '"'+String(s).replace(/["\\]/g," ")+'"'; }
 const VARIOUS=/^(various artists|various|classical|soundtrack|orchestra)$/i;
 async function findReleases(artist,title){
@@ -1333,7 +1335,7 @@ function rmChosen(){
   };
 }
 /* fill missing tracklists and covers (runs in this browser, saves to the sheet) */
-const TRIED=ls("rb-tried")||{}, CAAT=ls("rb-caa")||{};
+const TRIED=ls("rb-tried2")||{}, CAAT=ls("rb-caa2")||{};
 const FILL={on:false,done:0,total:0,found:0,cov:0,msg:""};
 function needT(r){ return !(SDB.tracks[r.key]&&SDB.tracks[r.key].length)&&!TRIED[r.key]; }
 function needC(r){ return !r.cover&&(COVERS[r.key]===undefined||(!COVERS[r.key]&&!CAAT[r.key])); }
@@ -1348,9 +1350,9 @@ async function fillRun(){
   const todo=RECS.filter(r=>needT(r)||needC(r)); FILL.total=todo.length; FILL.done=0; FILL.found=0; FILL.cov=0; fillUI();
   for(const r of todo){
     if(!FILL.on) break;
-    if(needT(r)){ const info=await lookup(r); if(info&&info.sides&&info.sides.length) FILL.found++; else { TRIED[r.key]=1; ls("rb-tried",TRIED); } }
+    if(needT(r)){ const info=await lookup(r); if(info&&info.sides&&info.sides.length) FILL.found++; else { TRIED[r.key]=1; ls("rb-tried2",TRIED); } }
     if(needC(r)&&FILL.on){ let url=COVERS[r.key]===undefined?await itunesCover(r):0;
-      if(url===0||url===""){ const c=await caaCover(r); if(c!==null){ CAAT[r.key]=1; ls("rb-caa",CAAT); if(c) url=c; } }
+      if(url===0||url===""){ const c=await caaCover(r); if(c!==null){ CAAT[r.key]=1; ls("rb-caa2",CAAT); if(c) url=c; } }
       if(url!==null){ COVERS[r.key]=url; ls("rb-covers",COVERS); if(url){ FILL.cov++; queueWrite("covers",{key:r.key,artist:r.artist,album:r.title,cover:url}); } } await wait(1500); }
     FILL.done++; if(FILL.done%10===0) flushWrites(); fillUI();
   }
