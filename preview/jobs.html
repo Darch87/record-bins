@@ -1,6 +1,6 @@
 <!doctype html><html><head><meta charset="utf-8"><title>jobs</title>
 <style>body{font:12px monospace;background:#fff;color:#000;margin:8px}pre{white-space:pre-wrap}</style></head>
-<body><div id="st">loading…</div><pre id="out"></pre>
+<body><div id="st">loading…</div><pre id="out" style="display:none"></pre><button id="sh" onclick="document.getElementById('out').style.display='block'">show</button>
 <script>
 const EXEC="https://script.google.com/macros/s/AKfycbxWSSxXlp_5k1APHeV0soOzSxFQYRXToDyMGrdQWmAJleUvU-IvjbVp54FLBpcIRDaq/exec";
 const MB="https://musicbrainz.org/ws/2/";
@@ -13,7 +13,7 @@ function sim(a,b){ const A=words(a),B=words(b); if(!A.length||!B.length) return 
   return Math.min(1,hit/Math.max(A.length,B.length)); }
 const VAR=/^(various artists|various|classical|soundtrack|orchestra)$/i;
 let last=0;
-async function mb(path){ const now=Date.now(); if(now-last<1150) await wait(1150-(now-last)); last=Date.now();
+async function mb(path){ const now=Date.now(); if(now-last<1050) await wait(1050-(now-last)); last=Date.now();
   for(let t=0;t<3;t++){ try{ const r=await fetch(MB+path,{headers:{Accept:"application/json"}}); if(r.status===503){ await wait(3000); continue; } return r.ok?await r.json():null; }catch(e){ await wait(2000); } } return null; }
 const esc=s=>String(s).replace(/[+\-&|!(){}\[\]^"~*?:\\\/]/g," ").trim();
 function q(artist,title,field){ let s=`${field}:(${esc(title)})`; if(artist&&!VAR.test(artist)) s+=` AND artist:(${esc(artist)})`; return encodeURIComponent(s); }
@@ -24,6 +24,7 @@ function pick(list,artist,title,tf){ let best=null;
 const conf=b=>!b?"none":(b.ts>=0.9&&b.as>=0.85?"high":(b.ts>=0.6&&b.as>=0.6?"medium":"low"));
 function imgOK(u){ return new Promise(res=>{ const i=new Image(); let d=false; i.onload=()=>{d=true;res(true)}; i.onerror=()=>{d=true;res(false)}; setTimeout(()=>{if(!d)res(false)},15000); i.src=u; }); }
 function jsonp(url){ return new Promise((res,rej)=>{ const cb="cb"+Date.now(); window[cb]=d=>{res(d)}; const s=document.createElement("script"); s.onerror=()=>rej(new Error("blocked")); s.src=url+(url.includes("?")?"&":"?")+"callback="+cb; document.head.appendChild(s); }); }
+const CK="jobs-cache-v1"; let CACHE={}; try{CACHE=JSON.parse(localStorage.getItem(CK)||"{}")}catch(e){} const save=()=>{try{localStorage.setItem(CK,JSON.stringify(CACHE))}catch(e){}};
 const T=s=>String(s==null?"":s).replace(/[\t\n]/g," ");
 (async()=>{
   const ykeys=(decodeURIComponent(location.hash.slice(1)).match(/y=([^&]*)/)||[,""])[1].split(",").filter(Boolean);
@@ -39,23 +40,23 @@ const T=s=>String(s==null?"":s).replace(/[\t\n]/g," ");
   const total=yrecs.length+miss.length; let n=0;
   const show=()=>{ st.textContent=`progress ${n}/${total} (years ${yrecs.length}, missing ${miss.length}, year keys given ${ykeys.length})`+(n>=total?" DONE":""); };
   show(); res.push("##YEAR\tartist\talbum\tsheetYear\tmbYear\tconf\tmbArtist\tmbTitle\tmbId");
-  for(const r of yrecs){ const dd=await mb(`release-group?query=${q(r.a,r.t,"releasegroup")}&fmt=json&limit=10`);
+  for(const r of yrecs){ if(CACHE["Y"+r.k]){ res.push(CACHE["Y"+r.k]); n++; show(); continue; } const dd=await mb(`release-group?query=${q(r.a,r.t,"releasegroup")}&fmt=json&limit=10`);
     const b=pick(dd&&dd["release-groups"],r.a,r.t,"title");
-    res.push(["YEAR",r.a,r.t,r.y,b?(b.x["first-release-date"]||"").slice(0,4):"",conf(b),b?b.ac:"",b?b.x.title:"",b?b.x.id:""].map(T).join("\t"));
+    res.push(["YEAR",r.a,r.t,r.y,b?(b.x["first-release-date"]||"").slice(0,4):"",conf(b),b?b.ac:"",b?b.x.title:"",b?b.x.id:""].map(T).join("\t")); CACHE["Y"+r.k]=res[res.length-1]; save();
     n++; show(); out.textContent=lines.concat(res).join("\n"); }
   res.push("##MISS\tartist\talbum\tneedTracks\tneedCover\tconf\tmbArtist\tmbTitle\tmbDate\tmbRelease\tnTracks\tcaaCover\tdiscogsRelease");
-  for(const r of miss){ const needT=!(tk[r.k]&&tk[r.k].length), needC=!r.c;
+  for(const r of miss){ if(CACHE["M"+r.k]){ res.push(CACHE["M"+r.k]); n++; show(); continue; } const needT=!(tk[r.k]&&tk[r.k].length), needC=!r.c;
     const dd=await mb(`release?query=${q(r.a,r.t,"release")}&fmt=json&limit=25`);
     let list=(dd&&dd.releases)||[]; const b0=pick(list,r.a,r.t,"title"); let b=b0;
     if(b0){ const sameRG=list.filter(x=>x["release-group"]&&b0.x["release-group"]&&x["release-group"].id===b0.x["release-group"].id);
       const vin=sameRG.filter(x=>(x.media||[]).some(m=>/vinyl/i.test(m.format||""))); const chosen=(vin[0]||b0.x); b=Object.assign({},b0,{x:chosen}); }
     let nT="",caa="",dg="";
     if(b&&conf(b)!=="low"){
-      if(needT||true){ const rel=await mb(`release/${b.x.id}?inc=recordings+url-rels&fmt=json`);
+      if(needT){ const rel=await mb(`release/${b.x.id}?inc=recordings+url-rels&fmt=json`);
         if(rel){ nT=(rel.media||[]).reduce((s,m)=>s+(m.tracks||[]).length,0); (rel.relations||[]).forEach(x=>{ const mm=(x.url&&x.url.resource||"").match(/discogs\.com\/release\/(\d+)/); if(mm) dg=mm[1]; }); } }
       if(needC&&b.x["release-group"]){ const u=`https://coverartarchive.org/release-group/${b.x["release-group"].id}/front-500`; if(await imgOK(u)) caa=u; }
     }
-    res.push(["MISS",r.a,r.t,needT?1:0,needC?1:0,conf(b),b?b.ac:"",b?b.x.title:"",b?b.x.date||"":"",b?b.x.id:"",nT,caa,dg].map(T).join("\t"));
+    res.push(["MISS",r.a,r.t,needT?1:0,needC?1:0,conf(b),b?b.ac:"",b?b.x.title:"",b?b.x.date||"":"",b?b.x.id:"",nT,caa,dg].map(T).join("\t")); CACHE["M"+r.k]=res[res.length-1]; save();
     n++; show(); out.textContent=lines.concat(res).join("\n"); }
   show();
 })().catch(e=>{ st.textContent="ERROR "+e.message; });
