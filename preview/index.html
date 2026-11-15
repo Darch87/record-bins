@@ -1452,6 +1452,8 @@ function start(){
 async function init(){
   fit();
   ROOT._rb={st:()=>state,recs:()=>RECS,sdb:()=>SDB,auth:()=>AUTH,play,openGate,renderAll,buildWall,CRATES,WALL};
+  /* a passcode saved by an older page has no role with it: ask to sign in again */
+  if(AUTH.pass&&AUTH.role!=="admin"&&AUTH.role!=="guest"){ ["rb-pass","rb-role","rb-cache"].forEach(k=>ls(k,null)); AUTH.pass=""; AUTH.role=""; }
   if(!AUTH.pass){ showSignIn(); return; }
   const cached=readCache(), sig=d=>d?JSON.stringify([d.records,d.lists,Object.keys(d.tracks||{}).length,Object.keys(d.details||{}).length]):"";
   const before=sig(cached);
@@ -1464,7 +1466,7 @@ async function init(){
     const msg=String(e&&e.message||"");
     if(/passcode|sign in/i.test(msg)){ signOut(); showSignIn("Your passcode has changed. Sign in again."); return; }
     if(!started) showSignIn("The record list didn't load. Check your connection and try again.");
-    else status("Showing your saved copy of the list. The sheet didn't answer just now.",6000);
+    else status("Showing your saved copy of the list. The sheet didn't answer just now ("+msg.slice(0,80)+").",15000);
   }
 }
 init();
