@@ -1426,7 +1426,7 @@ function yvUI(){
   if(go) go.textContent=YV.on?"Stop":(YV.done||yd?(left?"Keep going":"Run again"):"Update years and values");
   if(bar) bar.style.width=(YV.total?Math.round(100*YV.done/YV.total):(yd&&!left?100:0))+"%";
   const yrs=YV.years!=null?`Years: ${YV.years} changed. `:(yd?"Years are done. ":"");
-  n.textContent=YV.msg||(YV.on||YV.done?`${yrs}Values: checked ${YV.done} of ${YV.total}, ${YV.ranges} got a price range`+(YV.lows?`, ${YV.lows} only a lowest price`:"")+(YV.none?`, ${YV.none} not on Discogs`:"")+"."+(YV.ebTotal?` eBay copies: ${YV.ebDone} of ${YV.ebTotal}.`:"")+(YV.on?" Working…":""):`${yrs}${left} records have no Value yet.`);
+  n.textContent=YV.msg||(YV.on||YV.done?`${yrs}Values: checked ${YV.done} of ${YV.total}, ${YV.ranges} got a price range`+(YV.lows?`, ${YV.lows} only a lowest price`:"")+(YV.none?`, ${YV.none} not on Discogs`:"")+"."+(YV.ebTotal?` eBay copies: ${YV.ebDone} of ${YV.ebTotal}`+(YV.ebRanges?`, ${YV.ebRanges} got an eBay range`:"")+".":"")+(YV.on?" Working…":""):`${yrs}${left} records have no Value yet.`);
 }
 async function yvRun(){
   try{
@@ -1448,8 +1448,8 @@ async function yvRun(){
         if(o.sugErr){ errs.push(o.sugErr); continue; }
         VALDONE[o.key]=1; LOWDONE[o.key]=1; if(o.ebay!=null) EBDONE[o.key]=1; YV.done++;
         if(!o.ok){ YV.none++; nfKeys.push(o.key); continue; } okSeen++; if(o.sug) sugSeen++;
-        if(o.value&&r&&(r.value==null||/\(Discogs\)$/.test(o.value))) Object.assign(r,vrange(o.value));
-        if(o.value){ if(/\(Discogs\)$/.test(o.value)) YV.ranges++; else YV.lows++; }
+        if(o.value&&r&&(r.value==null||/\((Discogs|eBay)\)$/.test(o.value))) Object.assign(r,vrange(o.value));
+        if(o.value){ if(/\((Discogs|eBay)\)$/.test(o.value)) YV.ranges++; else YV.lows++; }
       }
       ls("rb-val2",VALDONE); ls("rb-eb1",EBDONE); ls("rb-low1",LOWDONE); yvUI();
       if(res.ebay) YV.ebay=true;
@@ -1464,7 +1464,8 @@ async function yvRun(){
         const batch=eb.slice(i,i+10);
         const res=await api("ebayfill",{items:batch.map(r=>({key:r.key,artist:r.artist,album:r.title}))});
         if(!res||!res.ok){ if(res&&/eBay keys/i.test(res.error||"")){ YV.ebTotal=0; break; } YV.on=false; YV.msg=res&&/unknown action/i.test(res.error||"")?"Your sheet script needs the update first. Paste the new script, redeploy, then press this again.":"Stopped: "+((res&&res.error)||"no answer from the sheet")+"."; break; }
-        for(const o of res.done){ EBDONE[o.key]=1; YV.ebDone++; if(SDB.details[o.key]) delete SDB.details[o.key]; }
+        for(const o of res.done){ EBDONE[o.key]=1; YV.ebDone++; if(SDB.details[o.key]) delete SDB.details[o.key];
+          const r=RECS.find(x=>x.key===o.key); if(o.value&&r&&(r.value==null||/lowest/i.test(r.vsrc||""))){ Object.assign(r,vrange(o.value)); YV.ebRanges=(YV.ebRanges||0)+1; } }
         ls("rb-eb1",EBDONE); yvUI();
       }
     }
