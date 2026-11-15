@@ -1,0 +1,10 @@
+<!doctype html><meta charset="utf-8"><title>check</title><body style="font:16px sans-serif;padding:20px"><pre id="o">loading…</pre>
+<script>
+function norm(s){return String(s||"").toLowerCase().replace(/^the\s+/,"").replace(/&/g,"and").replace(/[^a-z0-9]/g,"")}
+var U="https://script.google.com/macros/s/AKfycbxWSSxXlp_5k1APHeV0soOzSxFQYRXToDyMGrdQWmAJleUvU-IvjbVp54FLBpcIRDaq/exec";
+window.cb=function(d){var R=d.records,h=R[0],ci=h.indexOf("Cover"),rows=R.slice(1).filter(function(r){return r[0]||r[1]});
+ var cov=0,tr=0,missT=[],missC=[];rows.forEach(function(r){var k=norm(r[0])+"|"+norm(r[1]);if(r[ci])cov++;else missC.push(r[0]+" – "+r[1]);if(d.tracks[k]&&d.tracks[k].length)tr++;else missT.push(r[0]+" – "+r[1]);});
+ var last=rows[rows.length-1];
+ document.getElementById("o").textContent="checked "+new Date().toISOString()+"\nrecords "+rows.length+"\nwith cover "+cov+"\nwith tracks "+tr+"\ntrack keys in sheet "+Object.keys(d.tracks).length+"\nlast row: "+last[0]+" – "+last[1]+"\n\nno tracks ("+missT.length+"), last 15:\n"+missT.slice(-15).join("\n")+"\n\nno cover ("+missC.length+"), last 15:\n"+missC.slice(-15).join("\n");};
+var s=document.createElement("script");s.src=U+"?callback=cb&t="+Date.now();document.head.appendChild(s);
+</script>
