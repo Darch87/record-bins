@@ -1,0 +1,1816 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Dedubs Den of Discs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&display=swap">
+<style>
+html,body{margin:0;padding:0;background:#F6F5F0}
+#rb{
+  --bg:#F6F5F0; --panel:#FFFFFF; --ink:#16181C; --muted:#4D525B; --line:#1B1D21; --soft:#D6D8D0;
+  --ctl:#ECEEF3; --ctlb:#C9CDD8;
+  --lab:#FFE36E; --labink:#2A2200; --labb:#D8B82E;
+  --accent:#E0442E; --accentink:#FFFFFF; --hi:#DCE8FF; --hiink:#16181C;
+  --pat:none; --wood:#B98552; --wood2:#8E5E33;
+  --display:"Bricolage Grotesque","Arial Narrow",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  background:var(--bg); color:var(--ink); font-family:var(--body); font-size:16px; line-height:1.4;
+  height:var(--rb-h,100vh); min-height:480px; box-sizing:border-box; overflow:hidden; position:relative;
+  padding:8px max(10px,env(safe-area-inset-right,0px)) 10px max(10px,env(safe-area-inset-left,0px));
+  display:grid; gap:8px; grid-template-columns:auto minmax(0,1fr); grid-template-rows:auto minmax(0,1fr);
+  grid-template-areas:"head nav" "main main";
+  -webkit-text-size-adjust:100%; touch-action:pan-y; overscroll-behavior:contain;
+}
+#rb::before{content:"";position:absolute;inset:0;background-image:var(--pat);opacity:.3;pointer-events:none;z-index:0}
+#rb>*{position:relative;z-index:1}
+#rb *{box-sizing:border-box}
+#rb [hidden]{display:none!important}
+#rb button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer;text-align:inherit}
+#rb button:focus-visible,#rb a:focus-visible{outline:2.5px solid var(--accent);outline-offset:2px}
+#rb input,#rb select{font:400 15px var(--body);color:var(--ink);background:#fff;border:1.5px solid var(--ctlb);border-radius:8px;padding:7px 10px;min-width:0;height:36px}
+#rb input:focus,#rb select:focus{outline:2px solid var(--accent);outline-offset:1px}
+#rb .note{font-size:13px;color:var(--muted)}
+#rb a.lk{color:var(--ink);font-weight:700;text-decoration:underline;text-decoration-color:var(--accent);text-decoration-thickness:2px;text-underline-offset:2px}
+
+/* buttons: light by default, highlighted only when part of the selection */
+#rb .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:36px;padding:0 13px;border-radius:8px;background:#fff;border:1.5px solid var(--ctlb);font-weight:700;font-size:14px;white-space:nowrap;transition:background-color .15s,border-color .15s}
+#rb .btn:hover{background:var(--hi);border-color:var(--line)}
+#rb .btn.on{background:var(--hi);color:var(--hiink);border-color:var(--line);box-shadow:inset 0 0 0 1px var(--line)}
+#rb .btn.sm{height:30px;padding:0 10px;font-size:13px}
+#rb .btn.go{background:var(--accent);color:var(--accentink);border-color:var(--accent)}
+#rb .btn.go:hover{filter:brightness(.95)}
+#rb .btn.danger{background:#B3261E;color:#fff;border-color:#B3261E}
+#rb .btn.danger:hover{background:#8F1D17}
+#rb .btn.manage{background:var(--accent);color:var(--accentink);border-color:var(--accent);height:38px;padding:0 16px}
+#rb .btn.manage.on{box-shadow:0 0 0 2px var(--panel),0 0 0 4px var(--line)}
+#rb .btn[disabled]{opacity:.45;cursor:not-allowed}
+#rb .seg{display:inline-flex;gap:4px;flex-wrap:wrap}
+
+/* group label: the special color that says what a toolbar does */
+#rb .glab{display:inline-flex;align-items:center;height:36px;padding:0 10px;border-radius:8px 0 0 8px;background:var(--lab);color:var(--labink);border:1.5px solid var(--labb);font:800 13px var(--display);letter-spacing:.02em;white-space:nowrap}
+#rb .grp{display:inline-flex;align-items:center;gap:5px;background:var(--ctl);border:1.5px solid var(--ctlb);border-radius:10px;padding:0 6px 0 0}
+#rb .grp .glab{margin:-1.5px 2px -1.5px -1.5px}
+#rb .grp select{height:30px;padding:3px 8px;font-size:14px}
+#rb .grp input[type=search]{height:30px;width:170px;padding:3px 9px;font-size:14px}
+#rb .grp .btn{height:30px;padding:0 11px;font-size:14px}
+#rb .grp.test{opacity:.85}
+
+/* top bar */
+#rb .head{grid-area:head;display:flex;align-items:center;gap:14px;min-height:64px;padding:4px 4px 4px 2px}
+#rb h1{font:800 clamp(22px,2.8vw,32px)/1 var(--display);margin:0;letter-spacing:-.015em}
+#rb .count{font-size:15px;color:var(--muted);white-space:nowrap}
+#rb .count b{color:var(--ink);font-size:17px}
+#rb .who{font-size:12.5px;color:var(--muted)}
+#rb .who button{text-decoration:underline;font-size:12.5px}
+#rb .brandrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+#rb .nav{grid-area:nav;display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;justify-content:flex-end;align-content:center}
+#rb-main{grid-area:main;min-height:0;min-width:0;display:flex;flex-direction:column}
+
+/* panels */
+#rb .panel{background:var(--panel);border:1px solid var(--soft);border-radius:12px;position:relative;overflow:hidden;min-width:0;min-height:0;display:flex;flex-direction:column}
+#rb .pbar{flex:0 0 auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:46px;padding:6px 8px;background:var(--ctl);border-bottom:1.5px solid var(--ctlb)}
+#rb .pbar .ptitle{font:800 13px var(--display);letter-spacing:.08em;text-transform:uppercase}
+#rb .pbar .right{margin-left:auto;font-size:14px;color:var(--muted)}
+#rb .pbar .right b{color:var(--ink)}
+#rb .sel{color:var(--accent);font-weight:800}
+#rb .steps{flex:0 0 auto;display:flex;gap:4px 14px;flex-wrap:wrap;padding:5px 10px;font-size:12.5px;color:var(--muted);border-bottom:1px solid var(--soft)}
+#rb .steps b{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;background:var(--lab);color:var(--labink);font-size:11px;margin-right:4px;border:1px solid var(--labb)}
+
+/* bin digging layout: bins top left, now playing top right, the open bin across the bottom */
+#rb .dig{flex:1;min-height:0;display:grid;grid-template-columns:minmax(300px,.72fr) minmax(0,1.6fr);grid-template-rows:minmax(0,50fr) minmax(0,50fr);gap:8px}
+#rb .inbin{grid-column:1 / -1}
+
+/* bins (axonometric, parallel, length to scale) */
+#rb .bscroll{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin}
+#rb .bscroll svg{display:block;width:100%}
+#rb .bscroll svg text{font-family:var(--body);font-weight:700;paint-order:stroke;stroke-linejoin:round;stroke:#fff;stroke-width:3px}
+#rb .bscroll .blab{font-size:13px}
+#rb .bscroll .bnum{font-size:11px;font-weight:400}
+#rb .bin{cursor:pointer;outline:none}
+#rb .bin .rk{transform-box:fill-box}
+#rb .bin:hover .rk,#rb .bin:focus-visible .rk{animation:rbrip .55s ease-out both;animation-delay:var(--d)}
+#rb .bin:hover .blab{text-decoration:underline}
+@keyframes rbrip{0%{transform:none}35%{transform:translateY(-5px)}100%{transform:none}}
+
+/* now playing */
+#rb .np{padding:0}
+#rb .nptitle{flex:0 0 auto;margin:8px 8px 0;padding:8px 12px;border-radius:10px;background:var(--hi);color:var(--hiink);box-shadow:inset 0 0 0 1.5px var(--line)}
+#rb .nptitle .ar{font-weight:700;font-size:15px;line-height:1.2}
+#rb .nptitle .al{font:800 clamp(20px,2vw,26px)/1.05 var(--display);margin-top:2px}
+#rb .npmeta{flex:0 0 auto;margin:5px 8px 0;padding:2px 4px;font-size:13.5px;line-height:1.35;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#rb .npmeta .yr{font-weight:800}
+#rb .npmeta .press{display:inline-block;font-weight:800;color:var(--accent);margin-left:2px}
+#rb .npmeta .styles{color:var(--muted)}
+#rb .npbody{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,.78fr) minmax(0,1fr) minmax(0,1.3fr);gap:8px;padding:6px 8px 8px}
+#rb .npcover{min-height:0;min-width:0;container-type:size;display:flex;align-items:flex-start;justify-content:center;padding-top:4px}
+#rb .slv{position:relative;width:min(100cqw,100cqh);aspect-ratio:1;perspective:900px;cursor:pointer}
+#rb .slv.empty{border:2px dashed var(--ctlb);border-radius:4px;cursor:default;display:flex;align-items:center;justify-content:center}
+#rb .slv .hole{font:800 13px var(--display);color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+#rb .slv .flipper{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .6s cubic-bezier(.3,1.3,.5,1);z-index:2}
+#rb .slv.over .flipper{transform:rotateY(180deg)}
+#rb .slv .face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border:1.2px solid var(--line);overflow:hidden;box-shadow:4px 5px 0 rgba(0,0,0,.16)}
+#rb .slv .back{transform:rotateY(180deg);background:var(--bk,#777)}
+#rb .slv .back img{width:100%;height:100%;object-fit:cover;display:block}
+#rb .slv .vinyl{position:absolute;top:3%;left:3%;width:94%;height:94%;border-radius:50%;background:radial-gradient(circle,#d9d7cf 0 15%,#141414 15.5% 100%);z-index:1;opacity:0}
+#rb .npbody.fresh .slv .flipper{animation:rbpull .6s cubic-bezier(.2,.9,.3,1.2) both}
+#rb .npbody.fresh .slv .vinyl{animation:rbslide 1s ease-in-out .35s both}
+#rb .npbody.fresh .disc.in{animation:rbdiscin .5s ease-out 1.05s both}
+#rb .npbody.fresh .arm.on{animation:rbarm 1.1s cubic-bezier(.4,1.6,.5,1) 1.2s both}
+@keyframes rbpull{from{transform:translateY(40%) rotate(-4deg);opacity:0}to{transform:none;opacity:1}}
+@keyframes rbslide{0%{transform:none;opacity:1}70%{transform:translateX(85%);opacity:1}100%{transform:translateX(120%);opacity:0}}
+@keyframes rbdiscin{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}
+@keyframes rbarm{0%{transform:rotate(0)}60%{transform:rotate(27deg)}80%{transform:rotate(23deg)}100%{transform:rotate(24deg)}}
+#rb .disc{transform-box:view-box;transform-origin:140px 128px}
+#rb .npdeck{display:flex;flex-direction:column;min-height:0;min-width:0}
+#rb .tt{flex:1;min-height:90px;display:flex;align-items:center;justify-content:center;padding:6px 0 16px;container-type:size;cursor:pointer}
+#rb .axo{transform:rotateX(52deg) rotateZ(-32deg);transform-style:preserve-3d;width:min(100%,118cqh);aspect-ratio:1.25;position:relative}
+#rb .plinth{position:absolute;inset:0;border-radius:6px;background:var(--plinth,#F1F1EC);border:1.2px solid var(--line);transform-style:preserve-3d}
+#rb .plinth .f{position:absolute;background:var(--plinth2,#D9D9D2);border:1.2px solid var(--line);backface-visibility:hidden}
+#rb .plinth .fb{left:0;right:0;top:100%;height:var(--th,16px);transform-origin:top;transform:rotateX(-90deg)}
+#rb .plinth .ft{left:0;right:0;bottom:100%;height:var(--th,16px);transform-origin:bottom;transform:rotateX(90deg)}
+#rb .plinth .fr{top:0;bottom:0;left:100%;width:var(--th,16px);transform-origin:left;transform:rotateY(90deg)}
+#rb .plinth .fl{top:0;bottom:0;right:100%;width:var(--th,16px);transform-origin:right;transform:rotateY(-90deg)}
+#rb .plinth svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+#rb .spin{transform-box:fill-box;transform-origin:center}
+@keyframes rbspin{to{transform:rotate(360deg)}}
+#rb .arm{transform-box:view-box;transform-origin:262px 46px;transition:transform .5s cubic-bezier(.4,1.5,.5,1)}
+#rb .arm.on{transform:rotate(24deg)}
+#rb .meta{flex:0 0 auto;font-size:13.5px;line-height:1.35;padding:2px 2px 6px;color:var(--ink)}
+#rb .meta .yr{font-weight:800}
+#rb .meta .press{display:inline-block;font-weight:800;color:var(--accent);margin-left:2px}
+#rb .meta .styles{color:var(--muted)}
+#rb .npright{display:flex;flex-direction:column;min-height:0}
+#rb .tlist{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding-right:2px}
+#rb table.tr{width:100%;border-collapse:collapse;font-size:12.5px;line-height:1.25}
+#rb table.tr th{position:sticky;top:0;background:var(--panel);z-index:2;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700;text-align:left;padding:3px 3px;border-bottom:1.5px solid var(--line);vertical-align:bottom}
+#rb table.tr th.tm{text-align:right}
+#rb table.tr th.tm b{display:block;font-size:12px;color:var(--ink);letter-spacing:0;text-transform:none}
+#rb table.tr th.dj{text-align:center;width:54px;line-height:1.05}
+#rb table.tr td{padding:2px 3px;border-bottom:1px dashed var(--soft);vertical-align:middle}
+#rb table.tr tr.sidehead td{border-bottom:0;padding-top:7px;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:800}
+#rb table.tr td.n{width:24px;color:var(--muted);font-variant-numeric:tabular-nums}
+#rb table.tr td.tm{text-align:right;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+#rb table.tr td.ly{width:46px;text-align:center}
+#rb table.tr td.dj{text-align:center}
+#rb .ly a{font-size:11.5px;font-weight:700;color:var(--muted);text-decoration:underline}
+#rb .ly a:hover{color:var(--ink)}
+#rb .play{display:inline-flex;align-items:center;gap:5px;text-align:left}
+#rb .play i{flex:0 0 18px;width:18px;height:18px;border-radius:50%;border:1.5px solid var(--line);display:inline-flex;align-items:center;justify-content:center;font-style:normal;font-size:8px}
+#rb .play.has:hover i,#rb .play.on i{background:var(--accent);border-color:var(--accent);color:var(--accentink)}
+#rb .play:not(.has) i{visibility:hidden}
+#rb .djb{width:18px;height:18px;border:1.5px solid var(--line);border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;line-height:1;color:transparent;background:#fff}
+#rb .djb.on{background:var(--accent);border-color:var(--accent);color:var(--accentink)}
+#rb .money{flex:0 0 auto;height:122px;overflow:hidden;padding:6px 9px;border-radius:10px;background:var(--ctl);border:1px solid var(--ctlb);display:flex;flex-direction:column;gap:2px;font-size:12.5px}
+#rb .money .facts{display:flex;align-items:baseline;gap:6px;white-space:nowrap;overflow:hidden}
+#rb .money .forsale{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#rb .money .facts b{font-size:14px}
+#rb .money .facts span{color:var(--muted)}
+#rb .wave{display:flex;flex-direction:column;gap:2px;min-width:0}
+#rb .wave svg{width:100%;height:62px;display:block;overflow:visible}
+#rb .wfoot{display:flex;flex-wrap:wrap;align-items:center;gap:2px 12px}
+#rb .wkey{display:flex;flex-wrap:wrap;gap:2px 10px;font-size:11px;color:var(--muted)}
+#rb .wkey span{display:inline-flex;align-items:center;gap:4px}
+#rb .wkey i{display:inline-block;width:10px;height:8px}
+#rb .wkey .kw{background:var(--accent);opacity:.35;border-radius:5px 5px 0 0}
+#rb .wkey .kd{width:7px;height:7px;border:1.5px solid #1B1D21;border-radius:50%;background:#fff}
+#rb .wkey .kt{width:1.5px;height:8px;background:#1B1D21}
+#rb .wkey .kp{width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:6px solid #1B1D21}
+#rb .facts .vsrc{font-size:11px;color:var(--muted)}
+#rb .wave .cap{font-size:12px;color:var(--muted)}
+#rb .wave .cap b{color:var(--ink)}
+
+/* the open bin: crates across the width, each moved with vertical scroll */
+#rb .cols{flex:1;min-height:0;display:flex;gap:8px;padding:6px;overflow:hidden}
+#rb .col{flex:1 1 0;min-width:0;display:flex;flex-direction:column;border:1px solid var(--soft);border-radius:8px;background:linear-gradient(#FBF8F2 60%,#EFE6D6);overflow:hidden;position:relative}
+#rb .collab{flex:0 0 auto;display:flex;justify-content:space-between;gap:6px;align-items:center;font:800 13px/1.2 var(--display);padding:4px 8px;border-bottom:1px solid var(--soft);background:var(--panel);white-space:nowrap;overflow:hidden}
+#rb .collab small{font:400 12px var(--body);color:var(--muted)}
+#rb .collab .cur{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:22px;padding:0 5px;border-radius:5px;background:var(--hi);box-shadow:inset 0 0 0 1.5px var(--line);font-size:14px}
+#rb .crate{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin;position:relative}
+#rb .stage{position:sticky;top:0;left:0;width:100%;overflow:hidden}
+#rb .cbox{position:absolute;left:0;top:0;pointer-events:none}
+#rb .cbox.back{z-index:0}
+#rb .cbox.front{z-index:1500}
+#rb .card{position:absolute;left:0;top:0;transform-style:preserve-3d;transform-origin:50% 100%;transition:transform .22s cubic-bezier(.3,1.4,.5,1),opacity .15s}
+#rb .card .face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border:1.2px solid var(--line);overflow:hidden;box-shadow:0 -2px 0 rgba(0,0,0,.08)}
+#rb .card .back{transform:rotateX(180deg);background:var(--bk,#888)}
+#rb .card .back img{width:100%;height:100%;object-fit:cover;display:block}
+#rb .card.div .front{background:#F3EFE6;border-radius:3px}
+#rb .card.div .tab{position:absolute;top:-14%;left:8%;width:30%;height:18%;background:#F3EFE6;border:1.2px solid var(--line);border-bottom:0;border-radius:6px 6px 0 0;display:flex;align-items:center;justify-content:center;font:800 15px var(--display);backface-visibility:hidden}
+#rb .card.div .big{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:800 42px var(--display);color:var(--line);opacity:.18}
+#rb .card.rec{cursor:pointer}
+#rb .card.rec.up .front{box-shadow:0 10px 18px rgba(0,0,0,.25)}
+#rb .card.rec.on .front{outline:3px solid var(--accent);outline-offset:2px}
+#rb .crate .spacer{width:1px}
+
+/* sleeves */
+#rb .sleeve{position:relative;width:100%;height:100%;container-type:inline-size;overflow:hidden;background:var(--s1);color:var(--s3);isolation:isolate}
+#rb .sleeve .art{position:absolute;inset:0;z-index:-1}
+#rb .sleeve .t{position:absolute;left:7cqw;right:7cqw;font-family:var(--display);line-height:.95;overflow-wrap:anywhere}
+#rb .sleeve .a{top:7cqw;font-weight:800;font-size:12.5cqw;text-transform:uppercase}
+#rb .sleeve .n{bottom:7cqw;font-weight:500;font-size:8.5cqw;line-height:1.02}
+#rb .sleeve.L1 .art{background:radial-gradient(circle at 78% 64%,var(--s2) 0 26%,transparent 26.5%),radial-gradient(circle at 78% 64%,#0b0b0b 0 40%,transparent 40.5%)}
+#rb .sleeve.L2 .art{background:repeating-linear-gradient(var(--ang),var(--s2) 0 9cqw,transparent 9cqw 18cqw)}
+#rb .sleeve.L3 .art{background:linear-gradient(var(--ang),var(--s1) 0 52%,var(--s2) 52% 100%)}
+#rb .sleeve.L4 .art{background:radial-gradient(circle at 30% 70%,var(--s2) 0 34%,transparent 34.5%)}
+#rb .sleeve .cover{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .3s}
+#rb .sleeve .cover.on{opacity:1}
+
+/* pick for me */
+#rb .pop{position:absolute;z-index:50;right:10px;top:70px;max-height:calc(100% - 80px);overflow-y:auto;overscroll-behavior:contain;width:min(420px,calc(100% - 20px));background:var(--panel);border:1.5px solid var(--line);border-radius:14px;padding:14px;box-shadow:0 14px 40px rgba(0,0,0,.22);display:flex;flex-direction:column;gap:10px}
+#rb .pop h3{margin:0;font:800 21px var(--display)}
+#rb .chips{display:flex;flex-wrap:wrap;gap:5px}
+#rb .lab{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--muted)}
+#rb .eras{display:flex;align-items:flex-end;gap:4px;height:118px;padding:0 2px}
+#rb .era{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px;height:100%}
+#rb .era .bar{width:100%;border-radius:5px 5px 2px 2px;background:var(--ctl);border:1.5px solid var(--ctlb);transition:background-color .15s}
+#rb .era:hover .bar{background:var(--hi)}
+#rb .era.on .bar{background:var(--accent);border-color:var(--line)}
+#rb .era .c{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+#rb .era .y{font-size:11.5px;font-weight:800}
+#rb .optbar{display:flex;flex-direction:column;gap:6px}
+#rb .optbar .btn{width:100%;height:40px;justify-content:flex-start}
+#rb .optbar .btn small{font-weight:400;color:var(--muted);margin-left:auto}
+#rb .optbar .btn.go small{color:inherit;opacity:.85}
+
+/* DJ playlists: checkout desk on the left, the long wall on the right */
+#rb .djmode{flex:1;min-height:0;display:grid;grid-template-columns:minmax(280px,.75fr) minmax(0,2fr);gap:8px}
+#rb .desk{background:#EFE3CC;border-color:#7A5230}
+#rb .desk .pbar{background:#E3D2B0;border-bottom-color:#7A5230}
+#rb .deskscroll{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:8px;display:flex;flex-direction:column;gap:10px}
+#rb .djs{display:flex;gap:5px;flex-wrap:wrap}
+#rb .posters{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:12px 10px;padding:4px 2px 6px}
+#rb .poster{position:relative;aspect-ratio:3/4;display:flex;flex-direction:column;justify-content:space-between;padding:8px;text-align:left;border:1.5px solid var(--line);box-shadow:2px 3px 0 rgba(0,0,0,.25);transform:rotate(var(--r,0deg));transition:transform .15s;overflow:hidden;background:var(--pbg);color:var(--pink)}
+#rb .poster::before{content:"";position:absolute;inset:0;background-image:var(--ppat);opacity:.5;z-index:0}
+#rb .poster>*{position:relative;z-index:1}
+#rb .poster b{font:800 15px/1 var(--display);text-transform:uppercase;letter-spacing:.02em;overflow-wrap:anywhere}
+#rb .poster small{font-size:11px;font-weight:700}
+#rb .poster.sticker{aspect-ratio:1;border-radius:50%;align-items:center;justify-content:center;text-align:center;padding:12px}
+#rb .poster.sticker b{font-size:13px}
+#rb .poster:hover{transform:rotate(0deg) scale(1.03)}
+#rb .poster.on{outline:3px solid var(--accent);outline-offset:3px;transform:rotate(0deg)}
+#rb .boards{display:flex;flex-direction:column;gap:10px}
+#rb .board{display:block;width:100%;text-align:left;background:#151515;background-image:repeating-linear-gradient(180deg,#1E1E1E 0 2px,#111 2px 9px);border:6px solid #6B4A2B;border-radius:6px;padding:8px 10px;color:#F4F1E8;font:700 12.5px/1.55 "Courier New",ui-monospace,monospace;text-transform:uppercase;letter-spacing:.06em;text-shadow:0 1px 0 rgba(0,0,0,.6)}
+#rb .board .bt{display:flex;justify-content:space-between;gap:6px;font-size:13.5px;border-bottom:1px solid #444;margin-bottom:4px;padding-bottom:3px}
+#rb .board .bt span{color:#FFD84D}
+#rb .board ol{margin:0;padding:0;list-style:none}
+#rb .board li{display:flex;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#rb .board li i{font-style:normal;color:#AAA;flex:0 0 auto}
+#rb .board.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--panel),0 0 0 4px var(--line)}
+#rb .board .tools{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;text-transform:none;letter-spacing:0;font-family:var(--body)}
+#rb .board .tools input{height:30px;font-size:13px;width:160px}
+#rb .deskart{flex:0 0 auto;height:96px;border-top:6px solid #7A5230;background:#A9774A;position:relative}
+#rb .deskart svg{position:absolute;left:0;right:0;bottom:0;height:100%;width:100%}
+#rb .wall{background:#E9E1CF;border-color:#6B4A2B}
+#rb .wallbar{gap:10px}
+#rb .prog{flex:1 1 140px;min-width:100px;height:10px;border-radius:5px;background:#fff;border:1.5px solid var(--line);overflow:hidden;position:relative}
+#rb .prog i{position:absolute;top:0;bottom:0;left:0;background:var(--accent)}
+#rb .wscroll{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin;position:relative}
+#rb .wstage{position:sticky;top:0;overflow:hidden;background:#E9E1CF;background-image:linear-gradient(90deg,rgba(0,0,0,.03) 50%,transparent 50%);background-size:160px 100%}
+#rb .wtrack{position:absolute;top:0;left:0;height:100%;will-change:transform}
+#rb .shelf{position:absolute;left:0;height:10px;background:linear-gradient(#C08A55,#8E5E33);border-top:1.5px solid #5E3D20;border-bottom:1.5px solid #5E3D20}
+#rb .wfloor{position:absolute;left:0;bottom:0;height:16px;background:#7A5230;border-top:2px solid #5E3D20}
+#rb .wrec{position:absolute;perspective:700px;cursor:pointer}
+#rb .wrec .inner{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .5s ease}
+#rb .wrec.flip .inner{transform:rotateY(180deg)}
+#rb .wrec .face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border:1.2px solid var(--line);overflow:hidden;box-shadow:3px 4px 0 rgba(0,0,0,.18)}
+#rb .wrec .back{transform:rotateY(180deg);background:var(--bk,#777)}
+#rb .wrec .back img{width:100%;height:100%;object-fit:cover}
+#rb .wrec.inpl .front{outline:3px solid var(--accent);outline-offset:2px}
+#rb .wempty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--muted)}
+
+/* gatefold */
+#rb .modal{position:absolute;inset:0;z-index:80;background:rgba(20,18,14,.55);display:flex;align-items:center;justify-content:center;padding:14px}
+#rb .gate{width:min(860px,100%);max-height:100%;display:flex;flex-direction:column;gap:8px;perspective:1600px}
+#rb .gatehead{display:flex;align-items:center;gap:10px;background:var(--panel);border:1.5px solid var(--line);border-radius:10px;padding:8px 10px}
+#rb .gatehead img,#rb .gatehead .sw{width:52px;height:52px;object-fit:cover;border:1px solid var(--line);flex:0 0 auto}
+#rb .gatehead .t{flex:1;min-width:0}
+#rb .gatehead .t b{display:block;font:800 19px/1.1 var(--display)}
+#rb .leaves{display:grid;grid-template-columns:1fr 1fr;min-height:0;flex:1}
+#rb .leaf{background:var(--hi);color:var(--hiink);border:1.5px solid var(--line);padding:12px 14px;overflow-y:auto;min-height:220px;max-height:62vh;font-size:13.5px}
+#rb .leaf.l{border-radius:10px 0 0 10px;border-right:1px dashed var(--line);transform-origin:right center;animation:rbopenl .55s ease both}
+#rb .leaf.r{border-radius:0 10px 10px 0;border-left:0;transform-origin:left center;animation:rbopenr .55s ease both}
+@keyframes rbopenl{from{transform:rotateY(80deg)}to{transform:none}}
+@keyframes rbopenr{from{transform:rotateY(-80deg)}to{transform:none}}
+#rb .leaf h4{margin:0 0 6px;font:800 15px var(--display);letter-spacing:.06em;text-transform:uppercase}
+#rb .leaf ol{margin:0 0 10px;padding:0;list-style:none}
+#rb .leaf li{display:flex;gap:8px;padding:3px 4px;border-bottom:1px dashed rgba(0,0,0,.18)}
+#rb .leaf li .n{color:var(--muted);flex:0 0 26px}
+#rb .leaf li .tm{margin-left:auto;color:var(--muted);font-variant-numeric:tabular-nums}
+#rb .leaf li.hl{background:var(--panel);box-shadow:inset 3px 0 0 var(--accent);font-weight:700}
+
+/* manage records */
+#rb .mgr{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:8px;align-items:start}
+#rb .mgr .panel{overflow:visible}
+#rb .mcol{display:flex;flex-direction:column;gap:8px;min-width:0}
+#rb .mbody{padding:12px 14px 14px;display:flex;flex-direction:column;gap:12px}
+#rb .mgr h2{font:800 22px var(--display);margin:0}
+#rb .form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px}
+#rb .form label{display:flex;flex-direction:column;gap:3px;font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+#rb .form label.full{grid-column:1 / -1}
+#rb .form .dollar{display:flex;align-items:center;gap:6px}
+#rb .form .dollar span{font:700 16px var(--body);color:var(--ink)}
+#rb .form .dollar input{flex:1}
+#rb .form .auto{border-style:dashed;background:#FFFBEA}
+#rb .lookbtn{grid-column:1 / -1;width:100%;height:42px}
+#rb .savebar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#rb .passnote{display:flex;align-items:flex-start;gap:8px;font-size:13.5px;padding:8px 10px;border-radius:8px;background:var(--lab);color:var(--labink);border:1px solid var(--labb)}
+#rb .alert{font-size:14.5px;font-weight:700;padding:10px 12px;border-radius:9px;border:1.5px solid}
+#rb .alert.ok{background:#E3F4E6;border-color:#2E7D3B;color:#1C4D25}
+#rb .alert.bad{background:#FCE4E2;border-color:#B3261E;color:#6E1712}
+#rb .alert.info{background:var(--ctl);border-color:var(--ctlb);color:var(--ink)}
+#rb .results{display:flex;flex-direction:column;gap:4px;max-height:260px;overflow-y:auto}
+#rb .result{display:flex;align-items:center;gap:10px;padding:5px;border-radius:8px;border:1.5px solid transparent;text-align:left}
+#rb .result:hover{background:var(--hi)}
+#rb .result.on{background:var(--hi);border-color:var(--line)}
+#rb .thumb{width:44px;height:44px;flex:0 0 auto;border:1px solid var(--line)}
+#rb .chosen{display:flex;gap:12px;align-items:center;padding:10px;border-radius:10px;background:var(--ctl);border:1px solid var(--ctlb)}
+#rb .chosen .thumb{width:96px;height:96px}
+#rb .chosen b{font:800 18px/1.1 var(--display);display:block}
+#rb .confirm{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:10px;border:2px solid #B3261E;background:#FFF5F4}
+#rb .confirm b{font:800 18px var(--display)}
+#rb details.fill{font-size:13px;color:var(--muted)}
+#rb details.fill summary{cursor:pointer;font-weight:700;font-size:13px}
+#rb details.fill .inner{display:flex;flex-direction:column;gap:6px;padding-top:6px}
+#rb .pbar2{height:6px;background:var(--ctl);border-radius:3px;overflow:hidden}
+#rb .pbar2 i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+
+/* sign in */
+#rb .signin{position:absolute;inset:0;z-index:100;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:16px}
+#rb .signbox{width:min(400px,100%);background:var(--panel);border:1.5px solid var(--line);border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:12px;box-shadow:6px 8px 0 rgba(0,0,0,.12)}
+#rb .signbox h1{font-size:28px}
+#rb .signbox label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+#rb .signbox input{height:42px;font-size:16px}
+#rb .signbox .btn{height:44px;font-size:16px}
+#rb .status{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:90;background:var(--ink);color:#fff;font-size:14px;padding:8px 14px;border-radius:9px;max-width:calc(100% - 24px)}
+
+/* phones and narrow windows: one column, the page scrolls down */
+@media (max-width:780px){
+  #rb,#rb[data-layout="b"]{height:auto!important;max-height:none!important;overflow:visible!important;grid-template-columns:minmax(0,1fr);grid-template-areas:"head" "nav" "main"}
+  #rb[data-layout="b"] .nav{flex-direction:row;flex-wrap:wrap;background:none;border:0;padding:0}
+  #rb[data-layout="b"] .grp{flex-direction:row;padding:0 6px 0 0}
+  #rb[data-layout="b"] .grp .glab{border-radius:8px 0 0 8px;margin:-1.5px 2px -1.5px -1.5px;height:36px}
+  #rb[data-layout="b"] .grp>*:not(.glab){margin:0}
+  #rb .head{min-height:0;flex-wrap:wrap}
+  #rb .nav{justify-content:flex-start}
+  #rb .grp input[type=search]{width:130px}
+  #rb .dig{grid-template-columns:minmax(0,1fr);grid-template-rows:280px auto 460px}
+  #rb .np{min-height:520px}
+  #rb .npbody{grid-template-columns:minmax(0,1fr)}
+  #rb .tt{min-height:170px}
+  #rb .tlist{max-height:300px}
+  #rb .djmode{grid-template-columns:minmax(0,1fr);grid-template-rows:auto 480px}
+  #rb .deskscroll{max-height:440px}
+  #rb .mgr{grid-template-columns:minmax(0,1fr)}
+  #rb .form{grid-template-columns:minmax(0,1fr)}
+  #rb .leaves{grid-template-columns:minmax(0,1fr)}
+  #rb .leaf.l{border-radius:10px 10px 0 0;border-right:1.5px solid var(--line);border-bottom:1px dashed var(--line)}
+  #rb .leaf.r{border-radius:0 0 10px 10px;border-left:1.5px solid var(--line);border-top:0}
+}
+
+#rb .pbar>.glab,#rb .deskscroll>.glab{border-radius:8px;margin:0}
+#rb .signin,#rb .modal{position:fixed}
+
+/* ---------- round 6: store props that come alive when the mouse moves over them ---------- */
+#rb .scene{cursor:default}
+/* neon OPEN sign in the top bar */
+#rb #rb-neon{display:inline-flex}
+#rb .neon{display:inline-flex;align-items:center}
+#rb .neon .nt{font:800 17px var(--display);letter-spacing:.12em;fill:#FF6FB5;filter:drop-shadow(0 0 2px #FF6FB5) drop-shadow(0 0 5px rgba(255,111,181,.7))}
+#rb .neon .nb{stroke:#6FE7FF;filter:drop-shadow(0 0 3px rgba(111,231,255,.8))}
+#rb .neon.go .nt{animation:rbbuzz 1.6s steps(1,end) both}
+#rb .neon.go .nb{animation:rbbuzz 1.6s steps(1,end) .15s both}
+@keyframes rbbuzz{0%{opacity:1}8%{opacity:.15}12%{opacity:1}20%{opacity:.25}24%{opacity:1}46%{opacity:.4}50%{opacity:1}70%{opacity:.1}78%{opacity:1}100%{opacity:1}}
+/* gumball machine: hover jiggles the gumballs, a click turns the knob and drops one */
+#rb .gumball{display:inline-flex;align-items:center;gap:4px;height:34px;padding:0 8px 0 2px;border-radius:8px;font-weight:700;font-size:14px;white-space:nowrap}
+#rb .gumball:hover{background:var(--hi)}
+#rb .gumball svg{height:34px;width:auto;overflow:visible}
+#rb .gumball .balls circle,#rb .gumball .knob,#rb .gumball .drop{transform-box:fill-box;transform-origin:center}
+#rb .gumball .drop{opacity:0}
+#rb .gumball.go .balls circle{animation:rbjig .3s ease-in-out 3 alternate}
+#rb .gumball .balls circle:nth-child(2n){animation-delay:.08s}
+#rb .gumball.turning .knob{animation:rbknob .5s ease-in-out}
+#rb .gumball.turning .drop{animation:rbdrop .85s cubic-bezier(.5,0,.6,1) both}
+@keyframes rbjig{from{transform:translate(0,0)}to{transform:translate(1px,-2px)}}
+@keyframes rbknob{to{transform:rotate(360deg)}}
+@keyframes rbdrop{0%{opacity:1;transform:translate(-9px,-8px)}45%{opacity:1;transform:translate(0,0)}70%{transform:translate(6px,-2px)}100%{opacity:0;transform:translate(14px,0)}}
+/* the light tube over the aisle: it stutters on, and dust drifts in the beam */
+#rb .bscroll{position:relative}
+#rb .tube{position:sticky;top:0;display:block;height:0;z-index:4;pointer-events:none}
+#rb .tube .lamp{position:absolute;left:50%;top:6px;width:110px;margin-left:-55px;height:8px;border-radius:4px;background:#FFFDF2;border:1.2px solid #8A877E;box-shadow:0 0 8px rgba(255,246,200,.95);pointer-events:auto}
+#rb .tube .lamp::after{content:"";position:absolute;inset:-10px -12px}
+#rb .tube .cone{position:absolute;left:50%;top:14px;width:190px;margin-left:-95px;height:170px;background:linear-gradient(rgba(255,246,200,.42),rgba(255,246,200,0));clip-path:polygon(32% 0,68% 0,100% 100%,0 100%)}
+#rb .tube .mote{position:absolute;left:calc(50% - 50px + var(--k)*13px);top:calc(30px + var(--k)*13px % 70px);width:3px;height:3px;border-radius:50%;background:#C9B98E;opacity:0}
+#rb .tube.go .lamp{animation:rbbuzz 1.2s steps(1,end) both}
+#rb .tube.go .cone{animation:rbbuzz 1.2s steps(1,end) both}
+#rb .tube.go .mote{animation:rbmote 2.2s ease-in-out both;animation-delay:calc(var(--k)*90ms)}
+@keyframes rbmote{0%{opacity:0;transform:translate(0,0)}25%{opacity:.9}100%{opacity:0;transform:translate(calc(var(--k)*3px - 10px),60px)}}
+/* the store cat */
+#rb .cat{cursor:pointer}
+#rb .cat *{transform-box:fill-box}
+#rb .cat .tail{transform-origin:0% 100%}
+#rb .cat .chead{transform-origin:80% 80%}
+#rb .cat .cbody{transform-origin:50% 100%}
+#rb .cat .zz{font:800 9px var(--body);fill:#8A877E;stroke:none!important}
+#rb .cat .eyes{transform-origin:center}
+#rb .cat.go .tail{animation:rbswish .5s ease-in-out 4 alternate}
+#rb .cat.go .chead{animation:rbhead 2.6s ease-in-out both}
+#rb .cat.go .cbody{animation:rbstretch 2.6s ease-in-out both}
+#rb .cat.go .zz{animation:rbzz 1.2s ease-out both}
+#rb .cat.go .z2{animation-delay:.2s}
+#rb .cat.go .eyes{animation:rbblink 2.6s steps(1,end) both}
+@keyframes rbswish{from{transform:rotate(-14deg)}to{transform:rotate(16deg)}}
+@keyframes rbhead{0%{transform:none}20%{transform:rotate(-14deg) translateY(-3px)}60%{transform:rotate(8deg) translateY(-3px)}100%{transform:none}}
+@keyframes rbstretch{0%{transform:none}25%{transform:scale(1.18,.9)}45%{transform:scale(.95,1.08)}70%{transform:none}100%{transform:none}}
+@keyframes rbzz{to{transform:translate(8px,-14px);opacity:0}}
+@keyframes rbblink{0%{transform:scaleY(1)}20%{transform:scaleY(-1.6)}80%{transform:scaleY(-1.6)}86%{transform:scaleY(1)}}
+/* milk crates in four colours */
+#rb .col:nth-child(4n+1){--crate:#D9483A;--crate2:#A9362A}
+#rb .col:nth-child(4n+2){--crate:#3F74B5;--crate2:#2E5A8E}
+#rb .col:nth-child(4n+3){--crate:#E9B52F;--crate2:#B98B1A}
+#rb .col:nth-child(4n+4){--crate:#3E9A64;--crate2:#2D7448}
+/* DJ wall: labels on the shelves, letter board, posters, props, desk */
+#rb .shelftag{position:absolute;z-index:6;background:#FFF8D6;border:1px solid #5E3D20;font:800 11px/1.3 var(--display);padding:1px 6px 2px;border-radius:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.05em;text-transform:uppercase;color:#3A2A1C;box-shadow:1px 2px 0 rgba(0,0,0,.18);pointer-events:none}
+#rb .board li{animation:rbclack .3s steps(3,end) both;animation-delay:calc(var(--k,0)*55ms);transform-origin:50% 0}
+@keyframes rbclack{from{transform:rotateX(90deg);opacity:0}to{transform:none;opacity:1}}
+#rb .poster:hover{animation:rbflutter .9s ease-in-out}
+@keyframes rbflutter{0%,100%{transform:rotate(var(--r,0deg))}25%{transform:rotate(calc(var(--r,0deg) + 3deg)) skewY(-1.5deg)}55%{transform:rotate(calc(var(--r,0deg) - 2deg)) skewY(1deg)}80%{transform:rotate(calc(var(--r,0deg) + 1deg))}}
+#rb .prop{position:absolute;z-index:5;pointer-events:auto}
+#rb .prop svg{display:block;overflow:visible;transform-origin:50% 100%}
+#rb .prop.go svg{animation:rbwobble .7s ease-in-out 2}
+#rb .p-sale svg,#rb .p-poster svg{transform-origin:50% 0}
+#rb .p-sale.go svg{animation:rbswing 1.4s ease-in-out}
+#rb .p-sticker svg{transform-origin:0 0}
+#rb .p-sticker.go svg{animation:rbpeel 1.2s ease-in-out}
+#rb .p-gumball.go svg circle{animation:rbjig .25s ease-in-out 4 alternate;transform-box:fill-box}
+@keyframes rbwobble{0%,100%{transform:none}30%{transform:rotate(-5deg)}65%{transform:rotate(4deg)}}
+@keyframes rbswing{0%,100%{transform:none}20%{transform:rotate(12deg)}45%{transform:rotate(-8deg)}70%{transform:rotate(4deg)}}
+@keyframes rbpeel{0%,100%{transform:none}40%{transform:rotate(-14deg) scale(1.08)}}
+#rb .deskart svg .scene{pointer-events:auto}
+#rb .phone .ring{opacity:0}
+#rb .phone.go .ring{animation:rbring .25s steps(2,end) 6}
+#rb .phone .hs{transform-box:fill-box;transform-origin:50% 100%}
+#rb .phone.go .hs{animation:rbshake .12s linear 10 alternate}
+@keyframes rbring{0%{opacity:1}50%{opacity:0}}
+@keyframes rbshake{from{transform:rotate(-4deg) translateY(-2px)}to{transform:rotate(4deg) translateY(-2px)}}
+#rb .ash .smoke{transform-box:fill-box;transform-origin:50% 100%}
+#rb .ash.go .s1{animation:rbsmoke 2.6s ease-out both}
+#rb .ash.go .s2{animation:rbsmoke 2.6s ease-out .6s both}
+@keyframes rbsmoke{0%{opacity:.8;transform:none}100%{opacity:0;transform:translate(4px,-22px) scale(1.4,1.6)}}
+#rb .sign .swing{transform-box:view-box;transform-origin:28px -14px}
+#rb .sign.go .swing{animation:rbswing 1.8s ease-in-out}
+@media (max-width:780px){
+  #rb .npbody{grid-template-columns:minmax(0,.8fr) minmax(0,1fr);grid-template-rows:auto auto}
+  #rb .npright{grid-column:1 / -1}
+  #rb .npcover{height:180px}
+  #rb .tt{min-height:180px}
+  #rb .money{height:auto}
+  #rb .npmeta{white-space:normal}
+}
+@media (prefers-reduced-motion:reduce){#rb *{transition:none!important;animation:none!important}}
+
+</style>
+</head>
+<body>
+<div id="rb" data-layout="a" data-mode="dig">
+  <header class="head">
+    <div class="brandrow"><h1>Dedubs Den of Discs</h1><span id="rb-neon"></span><span class="count" id="rb-count"></span><button class="btn manage" id="rb-manage" hidden>Manage Records</button></div>
+    <div class="who" id="rb-who"></div>
+  </header>
+  <nav class="nav" id="rb-nav" aria-label="Main"></nav>
+  <main id="rb-main"></main>
+  <div class="pop" id="rb-pop" hidden></div>
+  <div class="modal" id="rb-modal" hidden></div>
+  <div class="signin" id="rb-signin" hidden></div>
+  <div class="status" id="rb-status" hidden role="status"></div>
+</div>
+<div id="rb-config" hidden data-write="https://script.google.com/macros/s/AKfycbxWSSxXlp_5k1APHeV0soOzSxFQYRXToDyMGrdQWmAJleUvU-IvjbVp54FLBpcIRDaq/exec"></div>
+<script>(function(){var L={"ok": true, "role": "admin", "records": [["Artist", "Album", "Year", "Genre", "Collection", "From", "Cost", "Value", "Quality", "Cover"], ["Neon Society", "Harbor Willow", "1985", "Rock", "Main", "Twist & Shout", "", "", "", ""], ["Willow Society", "Paper Neon", "1988", "Folk", "Dad's", "Gift", "", "5", "", ""], ["Harbor Society", "Garden Velvet", "1971", "Pop", "Main", "Twist & Shout", "", "8", "", ""], ["River Brothers", "Moon Orbit", "1976", "Prog Rock", "Dad's", "Wax Trax", "", "5", "", ""], ["Silver Kids", "Copper Static", "1960", "Jazz", "Dad's", "Twist & Shout", "", "8", "", ""], ["Saffron Society", "Meadow Garden", "1981", "New Wave", "Jazz shelf", "Gift", "", "12", "", ""], ["Lantern Club", "Neon River", "1971", "Rock", "Main", "Twist & Shout", "", "12", "", ""], ["Static Orchestra", "Cobalt Echo", "1967", "Rock", "Dad's", "Twist & Shout", "", "35", "", ""], ["Lantern Society", "Silver Amber", "1982", "Electronic", "Jazz shelf", "Gift", "", "35", "", ""], ["Signal Kids", "Cobalt Harbor", "1958", "Classical", "Main", "Gift", "", "20", "", ""], ["Orbit Kids", "Harbor Cobalt", "1966", "Pop", "Dad's", "Twist & Shout", "", "", "", ""], ["Amber Trio", "River Cobalt", "1956", "Pop", "Dad's", "Gift", "", "5", "", ""], ["Atlas Trio", "River Orbit", "1967", "New Wave", "Dad's", "Twist & Shout", "", "8", "", ""], ["Willow Club", "Cobalt Saffron", "1955", "Pop", "Main", "Gift", "", "5", "", ""], ["Amber Brothers", "River Saffron", "1961", "New Wave", "Main", "Gift", "", "5", "", ""], ["Harbor Band", "Paper Paper", "1965", "Soul/R&B", "Jazz shelf", "Twist & Shout", "", "20", "", ""], ["Paper Orchestra", "Saffron Neon", "1975", "Rock", "Main", "Wax Trax", "", "8", "", ""], ["Atlas Kids", "Copper Garden", "1970", "New Wave", "Dad's", "Gift", "", "", "", ""], ["Neon Sisters", "Lantern Neon", "1982", "Rock", "Dad's", "Twist & Shout", "", "", "", ""], ["Paper Society", "Static Neon", "1988", "Rock", "Main", "Gift", "", "8", "", ""], ["Echo Brothers", "Paper Cobalt", "1991", "Rock", "Jazz shelf", "Gift", "", "35", "", ""], ["Paper Orchestra", "Willow Moon", "1982", "Rock", "Jazz shelf", "Twist & Shout", "", "8", "", ""], ["River Orchestra", "Cobalt Atlas", "1988", "Rock", "Jazz shelf", "Wax Trax", "", "8", "", ""], ["Cobalt Sisters", "Copper Moon", "1972", "Soul/R&B", "Jazz shelf", "Twist & Shout", "", "", "", ""], ["Willow Club", "Static Paper", "1965", "Country", "Jazz shelf", "Gift", "", "20", "", ""], ["Copper Sisters", "Willow Garden", "1955", "Rock", "Main", "Twist & Shout", "", "20", "", ""], ["Static Trio", "Willow Willow", "1969", "Jazz", "Main", "Twist & Shout", "", "5", "", ""], ["Orbit Brothers", "Signal Copper", "1988", "New Wave", "Main", "Twist & Shout", "", "", "", ""], ["Orbit Trio", "Copper Signal", "1971", "Soul/R&B", "Main", "Twist & Shout", "", "8", "", ""], ["Moon Band", "River Amber", "1959", "Rock", "Jazz shelf", "Gift", "", "12", "", ""], ["Garden Society", "Willow Neon", "1986", "New Wave", "Main", "Twist & Shout", "", "", "", ""], ["Orbit Brothers", "Meadow Atlas", "1981", "Classical", "Dad's", "Twist & Shout", "", "35", "", ""], ["Garden Society", "Copper Atlas", "1962", "Jazz", "Main", "Gift", "", "5", "", ""], ["Silver Club", "Cobalt Copper", "1976", "Pop", "Jazz shelf", "Twist & Shout", "", "35", "", ""], ["Silver Band", "River Harbor", "1989", "Rock", "Dad's", "Wax Trax", "", "20", "", ""], ["Copper Trio", "Meadow Neon", "1981", "Pop", "Dad's", "Twist & Shout", "", "5", "", ""], ["Velvet Band", "Orbit Cobalt", "1989", "New Wave", "Jazz shelf", "Gift", "", "20", "", ""], ["Lantern Orchestra", "Willow Echo", "1971", "Blues", "Jazz shelf", "Gift", "", "35", "", ""], ["Cobalt Club", "Atlas Moon", "1993", "Rock", "Jazz shelf", "Wax Trax", "", "5", "", ""], ["River Brothers", "Garden Saffron", "1977", "Country", "Jazz shelf", "Twist & Shout", "", "", "", ""], ["Willow Club", "Cobalt Amber", "1975", "Rock", "Dad's", "Twist & Shout", "", "20", "", ""], ["Velvet Trio", "Amber Harbor", "1965", "Rock", "Jazz shelf", "Gift", "", "35", "", ""], ["Saffron Trio", "Harbor Silver", "1985", "Country", "Jazz shelf", "Twist & Shout", "", "20", "", ""], ["River Sisters", "Orbit Neon", "1986", "Classical", "Main", "Gift", "", "8", "", ""], ["Neon Brothers", "Signal Meadow", "1983", "New Wave", "Jazz shelf", "Gift", "", "8", "", ""], ["River Orchestra", "Atlas Saffron", "1955", "Pop", "Main", "Wax Trax", "", "12", "", ""], ["Signal Brothers", "Willow Willow", "1994", "Rock", "Main", "Wax Trax", "", "", "", ""], ["Lantern Brothers", "Orbit River", "1960", "Electronic", "Dad's", "Gift", "", "5", "", ""], ["Copper Trio", "Echo Neon", "1959", "Pop", "Main", "Twist & Shout", "", "5", "", ""], ["Willow Society", "Velvet Meadow", "1970", "Rock", "Main", "Twist & Shout", "", "", "", ""], ["Cobalt Trio", "Harbor Static", "1958", "Prog Rock", "Dad's", "Wax Trax", "", "35", "", ""], ["Silver Club", "Atlas Echo", "1960", "Jazz", "Dad's", "Wax Trax", "", "", "", ""], ["Signal Club", "Meadow Atlas", "1964", "Rock", "Dad's", "Gift", "", "20", "", ""], ["Moon Sisters", "Silver Silver", "1971", "Folk", "Dad's", "Wax Trax", "", "35", "", ""], ["River Sisters", "Cobalt Silver", "1979", "Rock", "Dad's", "Twist & Shout", "", "8", "", ""], ["Velvet Society", "Echo Moon", "1965", "Rock", "Jazz shelf", "Twist & Shout", "", "5", "", ""], ["Neon Band", "Copper Signal", "1966", "New Wave", "Jazz shelf", "Wax Trax", "", "35", "", ""], ["Willow Brothers", "Silver Meadow", "1992", "Rock", "Main", "Gift", "", "20", "", ""], ["Amber Society", "Atlas Orbit", "1957", "Soul/R&B", "Main", "Gift", "", "20", "", ""], ["Saffron Society", "Copper Cobalt", "1960", "Pop", "Dad's", "Twist & Shout", "", "35", "", ""], ["Paper Brothers", "Meadow Copper", "1977", "Rock", "Main", "Wax Trax", "", "", "", ""], ["Copper Kids", "Paper Garden", "1959", "Pop", "Jazz shelf", "Twist & Shout", "", "35", "", ""], ["River Trio", "Meadow Meadow", "1955", "Rock", "Main", "Wax Trax", "", "8", "", ""], ["Orbit Band", "Paper Velvet", "1985", "Country", "Main", "Twist & Shout", "", "8", "", ""], ["Neon Brothers", "River Willow", "1995", "Soul/R&B", "Dad's", "Twist & Shout", "", "5", "", ""], ["Atlas Orchestra", "Moon Meadow", "1987", "Pop", "Jazz shelf", "Wax Trax", "", "8", "", ""], ["Garden Sisters", "Cobalt Silver", "1968", "Rock", "Dad's", "Gift", "", "8", "", ""], ["Cobalt Sisters", "Atlas Cobalt", "1994", "Rock", "Dad's", "Gift", "", "20", "", ""], ["Moon Band", "Willow Static", "1993", "Pop", "Jazz shelf", "Wax Trax", "", "5", "", ""], ["Orbit Brothers", "Moon Silver", "1994", "Rock", "Jazz shelf", "Twist & Shout", "", "8", "", ""], ["Garden Orchestra", "Harbor Cobalt", "1955", "New Wave", "Jazz shelf", "Twist & Shout", "", "5", "", ""], ["Moon Kids", "Meadow Harbor", "1962", "Pop", "Dad's", "Wax Trax", "", "20", "", ""], ["Echo Trio", "Silver Velvet", "1966", "Country", "Main", "Gift", "", "", "", ""], ["Saffron Brothers", "Cobalt Orbit", "1978", "Rock", "Main", "Twist & Shout", "", "", "", ""], ["Paper Club", "Paper Static", "1986", "Rock", "Main", "Twist & Shout", "", "12", "", ""], ["Copper Orchestra", "Signal Cobalt", "1978", "New Wave", "Jazz shelf", "Gift", "", "", "", ""], ["Paper Club", "Echo Amber", "1969", "Pop", "Main", "Gift", "", "20", "", ""], ["Garden Brothers", "Willow Amber", "1989", "Classical", "Main", "Twist & Shout", "", "5", "", ""], ["Amber Club", "Signal Garden", "1956", "Rock", "Main", "Twist & Shout", "", "8", "", ""], ["Cobalt Orchestra", "Paper River", "1980", "Rock", "Main", "Gift", "", "20", "", ""], ["Lantern Brothers", "Amber Velvet", "1983", "Country", "Main", "Gift", "", "", "", ""], ["Atlas Kids", "Harbor Cobalt", "1973", "Soul/R&B", "Jazz shelf", "Twist & Shout", "", "", "", ""], ["Copper Club", "Meadow Paper", "1966", "Soul/R&B", "Main", "Wax Trax", "", "8", "", ""], ["Orbit Band", "Velvet Willow", "1982", "Rock", "Jazz shelf", "Twist & Shout", "", "20", "", ""], ["Paper Club", "Silver Orbit", "1973", "Rock", "Dad's", "Wax Trax", "", "8", "", ""], ["Signal Brothers", "Silver Amber", "1989", "Prog Rock", "Jazz shelf", "Gift", "", "8", "", ""], ["Orbit Brothers", "Signal Paper", "1989", "Rock", "Dad's", "Wax Trax", "", "5", "", ""], ["Copper Orchestra", "Harbor Moon", "1995", "Soul/R&B", "Main", "Twist & Shout", "", "5", "", ""], ["Signal Club", "Orbit Paper", "1989", "Pop", "Main", "Wax Trax", "", "", "", ""], ["Orbit Club", "Signal Silver", "1971", "Soul/R&B", "Main", "Gift", "", "12", "", ""], ["Static Kids", "Copper River", "1988", "Country", "Main", "Twist & Shout", "", "8", "", ""], ["Atlas Band", "Velvet Amber", "1988", "Soul/R&B", "Dad's", "Twist & Shout", "", "5", "", ""], ["Atlas Trio", "Atlas Paper", "1973", "Rock", "Jazz shelf", "Twist & Shout", "", "5", "", ""], ["Garden Trio", "Moon Velvet", "1955", "Pop", "Jazz shelf", "Wax Trax", "", "20", "", ""], ["Atlas Trio", "Moon Meadow", "1995", "Pop", "Jazz shelf", "Twist & Shout", "", "35", "", ""], ["Garden Band", "Paper Moon", "1963", "New Wave", "Main", "Twist & Shout", "", "20", "", ""], ["Cobalt Brothers", "Static Echo", "1992", "Jazz", "Main", "Wax Trax", "", "35", "", ""], ["Orbit Trio", "Orbit Velvet", "1965", "Rock", "Dad's", "Wax Trax", "", "35", "", ""], ["Atlas Society", "Saffron Amber", "1964", "Folk", "Dad's", "Wax Trax", "", "12", "", ""], ["Neon Orchestra", "Silver Copper", "1992", "Jazz", "Main", "Wax Trax", "", "20", "", ""], ["Saffron Kids", "Static Saffron", "1991", "Classical", "Jazz shelf", "Wax Trax", "", "12", "", ""], ["Cobalt Club", "River Silver", "1975", "Pop", "Dad's", "Wax Trax", "", "5", "", ""], ["Signal Orchestra", "Orbit River", "1972", "Pop", "Jazz shelf", "Twist & Shout", "", "8", "", ""], ["Harbor Kids", "Cobalt Garden", "1966", "New Wave", "Main", "Gift", "", "", "", ""], ["Meadow Band", "Paper Velvet", "1990", "Rock", "Main", "Twist & Shout", "", "8", "", ""], ["Willow Sisters", "Neon Lantern", "1982", "Pop", "Jazz shelf", "Twist & Shout", "", "8", "", ""], ["Paper Trio", "Silver Paper", "1981", "Rock", "Dad's", "Twist & Shout", "", "12", "", ""], ["Paper Kids", "Amber Cobalt", "1987", "Pop", "Jazz shelf", "Twist & Shout", "", "", "", ""], ["Amber Brothers", "Harbor Willow", "1991", "Rock", "Dad's", "Gift", "", "20", "", ""], ["Atlas Trio", "Willow Silver", "1960", "New Wave", "Dad's", "Wax Trax", "", "5", "", ""], ["Velvet Trio", "River Harbor", "1963", "Rock", "Dad's", "Gift", "", "35", "", ""], ["Amber Sisters", "Cobalt Willow", "1974", "Blues", "Dad's", "Wax Trax", "", "", "", ""], ["Cobalt Sisters", "Meadow Moon", "1986", "New Wave", "Jazz shelf", "Gift", "", "5", "", ""], ["Saffron Club", "Atlas River", "1962", "Pop", "Jazz shelf", "Twist & Shout", "", "20", "", ""], ["Neon Club", "Copper Neon", "1988", "Pop", "Dad's", "Gift", "", "12", "", ""], ["Signal Trio", "Copper Velvet", "1982", "Electronic", "Dad's", "Gift", "", "35", "", ""], ["Static Kids", "Echo Cobalt", "1978", "Rock", "Dad's", "Wax Trax", "", "35", "", ""], ["Saffron Orchestra", "Orbit Echo", "1986", "New Wave", "Jazz shelf", "Gift", "", "8", "", ""], ["Orbit Band", "Atlas Static", "1992", "Soul/R&B", "Jazz shelf", "Twist & Shout", "", "35", "", ""], ["Signal Club", "Velvet Lantern", "1991", "Pop", "Main", "Twist & Shout", "", "", "", ""], ["Neon Brothers", "Echo Cobalt", "1975", "New Wave", "Jazz shelf", "Twist & Shout", "", "8", "", ""], ["Paper Trio", "Paper Lantern", "1962", "Classical", "Jazz shelf", "Wax Trax", "", "5", "", ""], ["Neon Orchestra", "Signal Moon", "1989", "Soul/R&B", "Main", "Twist & Shout", "", "5", "", ""], ["Velvet Kids", "Meadow Garden", "1969", "Rock", "Jazz shelf", "Gift", "", "8", "", ""], ["Amber Society", "Saffron Willow", "1991", "Rock", "Jazz shelf", "Gift", "", "35", "", ""], ["Harbor Society", "Static Harbor", "1958", "Pop", "Jazz shelf", "Twist & Shout", "", "12", "", ""], ["Moon Kids", "Neon Paper", "1986", "Holiday", "Dad's", "Gift", "", "", "", ""], ["Moon Club", "Lantern Atlas", "1987", "New Wave", "Jazz shelf", "Twist & Shout", "", "5", "", ""], ["Echo Band", "Silver Lantern", "1989", "Folk", "Dad's", "Gift", "", "8", "", ""], ["Saffron Sisters", "Neon Static", "1972", "Jazz", "Main", "Gift", "", "12", "", ""], ["Saffron Brothers", "River Harbor", "1965", "Folk", "Main", "Twist & Shout", "", "35", "", ""], ["Willow Club", "Silver Orbit", "1967", "Jazz", "Main", "Wax Trax", "", "35", "", ""], ["Moon Society", "Velvet Moon", "1987", "New Wave", "Jazz shelf", "Twist & Shout", "", "35", "", ""], ["Meadow Band", "Static Static", "1967", "Blues", "Main", "Twist & Shout", "", "8", "", ""], ["Saffron Sisters", "Static Meadow", "1972", "Rock", "Main", "Gift", "", "8", "", ""], ["Orbit Club", "Copper Orbit", "1976", "Classical", "Jazz shelf", "Twist & Shout", "", "12", "", ""], ["Neon Club", "Silver Cobalt", "1957", "Rock", "Main", "Wax Trax", "", "20", "", ""], ["Lantern Brothers", "Echo Orbit", "1965", "Pop", "Jazz shelf", "Wax Trax", "", "12", "", ""], ["Lantern Brothers", "Cobalt Moon", "1984", "Folk", "Dad's", "Gift", "", "5", "", ""], ["Harbor Society", "Lantern Orbit", "1987", "Prog Rock", "Dad's", "Wax Trax", "", "12", "", ""], ["Moon Society", "Amber Signal", "1961", "Soul/R&B", "Dad's", "Wax Trax", "", "", "", ""], ["Silver Sisters", "Meadow Silver", "1979", "Folk", "Main", "Twist & Shout", "", "8", "", ""], ["Neon Kids", "Willow Signal", "1965", "Rock", "Dad's", "Wax Trax", "", "35", "", ""], ["Lantern Society", "Willow Static", "1976", "New Wave", "Main", "Wax Trax", "", "35", "", ""], ["Paper Band", "Signal Garden", "1957", "Folk", "Dad's", "Gift", "", "8", "", ""], ["Paper Club", "Amber Paper", "1980", "New Wave", "Dad's", "Twist & Shout", "", "8", "", ""], ["Lantern Brothers", "Willow Saffron", "1956", "New Wave", "Jazz shelf", "Twist & Shout", "", "5", "", ""], ["Copper Sisters", "Static Silver", "1983", "Folk", "Dad's", "Gift", "", "20", "", ""], ["Harbor Club", "Echo River", "1994", "Folk", "Jazz shelf", "Twist & Shout", "", "", "", ""], ["Copper Band", "Static Orbit", "1967", "Blues", "Main", "Gift", "", "12", "", ""], ["Static Orchestra", "Silver Velvet", "1961", "Rock", "Dad's", "Gift", "", "20", "", ""], ["Lantern Trio", "Cobalt Static", "1989", "Holiday", "Jazz shelf", "Gift", "", "5", "", ""], ["Velvet Brothers", "Static Static", "1971", "New Wave", "Dad's", "Twist & Shout", "", "20", "", ""], ["Orbit Club", "Atlas Static", "1991", "Rock", "Main", "Wax Trax", "", "", "", ""], ["Harbor Orchestra", "Orbit Static", "1981", "Holiday", "Main", "Gift", "", "12", "", ""], ["Lantern Orchestra", "Saffron Silver", "1985", "Folk", "Main", "Gift", "", "8", "", ""], ["Static Trio", "Lantern Meadow", "1993", "Prog Rock", "Jazz shelf", "Wax Trax", "", "35", "", ""], ["Garden Society", "Signal Willow", "1971", "Folk", "Dad's", "Wax Trax", "", "8", "", ""], ["Paper Brothers", "Orbit Lantern", "1978", "Jazz", "Dad's", "Twist & Shout", "", "5", "", ""], ["Neon Brothers", "Orbit Moon", "1971", "New Wave", "Dad's", "Gift", "", "35", "", ""], ["Atlas Club", "Saffron Willow", "1969", "New Wave", "Dad's", "Gift", "", "35", "", ""], ["Echo Society", "Lantern Garden", "1967", "Folk", "Main", "Wax Trax", "", "12", "", ""], ["Saffron Club", "Moon Static", "1993", "Rock", "Main", "Gift", "", "12", "", ""], ["Cobalt Brothers", "Echo Moon", "1993", "Folk", "Main", "Gift", "", "8", "", ""], ["Silver Brothers", "Amber Moon", "1977", "Folk", "Jazz shelf", "Twist & Shout", "", "20", "", ""], ["Lantern Orchestra", "Meadow Orbit", "1986", "Rock", "Main", "Wax Trax", "", "35", "", ""], ["Cobalt Sisters", "Echo Signal", "1974", "New Wave", "Jazz shelf", "Wax Trax", "", "35", "", ""], ["Saffron Club", "Silver Neon", "1983", "Rock", "Jazz shelf", "Gift", "", "5", "", ""], ["Signal Band", "River Silver", "1989", "Pop", "Jazz shelf", "Gift", "", "5", "", ""], ["Meadow Kids", "Cobalt Atlas", "1961", "Rock", "Dad's", "Wax Trax", "", "8", "", ""], ["Silver Orchestra", "Harbor River", "1968", "Soul/R&B", "Main", "Wax Trax", "", "", "", ""], ["Meadow Brothers", "Moon Velvet", "1963", "Rock", "Jazz shelf", "Twist & Shout", "", "5", "", ""], ["Saffron Society", "Silver Paper", "1976", "Pop", "Jazz shelf", "Gift", "", "12", "", ""], ["Copper Club", "Harbor Meadow", "1975", "Pop", "Jazz shelf", "Gift", "", "35", "", ""], ["River Band", "Meadow Velvet", "1989", "New Wave", "Jazz shelf", "Gift", "", "", "", ""], ["Meadow Brothers", "Moon Static", "1993", "Rock", "Jazz shelf", "Wax Trax", "", "20", "", ""], ["Lantern Trio", "Copper Atlas", "1984", "Folk", "Dad's", "Wax Trax", "", "35", "", ""], ["Copper Brothers", "Saffron Paper", "1988", "Rock", "Jazz shelf", "Wax Trax", "", "20", "", ""], ["Silver Sisters", "Saffron River", "1993", "Pop", "Dad's", "Wax Trax", "", "", "", ""], ["Static Club", "Atlas Garden", "1989", "New Wave", "Dad's", "Twist & Shout", "", "5", "", ""], ["Atlas Society", "Neon Saffron", "1992", "New Wave", "Main", "Twist & Shout", "", "", "", ""], ["Moon Orchestra", "Echo Willow", "1991", "Rock", "Main", "Twist & Shout", "", "20", "", ""], ["Signal Club", "Silver Silver", "1959", "Pop", "Main", "Wax Trax", "", "8", "", ""], ["Garden Society", "Moon Saffron", "1960", "New Wave", "Dad's", "Gift", "", "8", "", ""], ["Meadow Sisters", "Garden Moon", "1979", "New Wave", "Dad's", "Wax Trax", "", "20", "", ""], ["Copper Society", "River Amber", "1967", "Pop", "Main", "Gift", "", "5", "", ""], ["Signal Kids", "Copper Cobalt", "1982", "Rock", "Dad's", "Gift", "", "5", "", ""], ["Static Kids", "Copper Velvet", "1990", "Rock", "Jazz shelf", "Wax Trax", "", "5", "", ""], ["Meadow Band", "Orbit Amber", "1984", "Prog Rock", "Dad's", "Wax Trax", "", "20", "", ""], ["Velvet Society", "Neon Echo", "1959", "Rock", "Dad's", "Twist & Shout", "", "5", "", ""], ["Silver Trio", "Copper River", "1963", "Rock", "Main", "Wax Trax", "", "5", "", ""], ["Amber Sisters", "Static Velvet", "1976", "New Wave", "Main", "Gift", "", "8", "", ""], ["Echo Sisters", "Silver River", "1962", "Rock", "Main", "Twist & Shout", "", "8", "", ""], ["Willow Sisters", "Static Garden", "1966", "Pop", "Jazz shelf", "Twist & Shout", "", "8", "", ""], ["Saffron Band", "River Lantern", "1995", "New Wave", "Dad's", "Wax Trax", "", "5", "", ""], ["Willow Society", "Atlas Copper", "1976", "Rock", "Dad's", "Gift", "", "35", "", ""], ["Orbit Band", "Echo Velvet", "1986", "Folk", "Dad's", "Gift", "", "5", "", ""], ["Orbit Sisters", "Neon River", "1978", "Folk", "Jazz shelf", "Twist & Shout", "", "5", "", ""], ["Willow Trio", "Echo Amber", "1967", "Jazz", "Main", "Wax Trax", "", "8", "", ""], ["Harbor Club", "Static Orbit", "1981", "Holiday", "Dad's", "Twist & Shout", "", "", "", ""], ["Velvet Trio", "Harbor Meadow", "1961", "Blues", "Dad's", "Twist & Shout", "", "35", "", ""], ["Echo Kids", "River Atlas", "1961", "Country", "Main", "Gift", "", "35", "", ""], ["Silver Orchestra", "Velvet Saffron", "1986", "Jazz", "Dad's", "Gift", "", "5", "", ""], ["Copper Club", "Orbit Willow", "1995", "Folk", "Jazz shelf", "Twist & Shout", "", "35", "", ""], ["Neon Society", "Static Orbit", "1986", "Jazz", "Main", "Twist & Shout", "", "", "", ""], ["Moon Brothers", "Neon Meadow", "1991", "Blues", "Jazz shelf", "Twist & Shout", "", "12", "", ""], ["Signal Club", "Copper Lantern", "1995", "Country", "Dad's", "Wax Trax", "", "8", "", ""], ["Harbor Brothers", "Echo Copper", "1983", "Rock", "Jazz shelf", "Twist & Shout", "", "5", "", ""], ["Harbor Sisters", "Neon Willow", "1971", "Pop", "Main", "Twist & Shout", "", "8", "", ""], ["Lantern Band", "Paper Cobalt", "1985", "Folk", "Jazz shelf", "Wax Trax", "", "12", "", ""], ["Silver Club", "Atlas Echo", "1977", "Blues", "Jazz shelf", "Wax Trax", "", "35", "", ""], ["Static Society", "Orbit Orbit", "1986", "Folk", "Dad's", "Gift", "", "35", "", ""], ["Atlas Club", "Silver Harbor", "1968", "New Wave", "Main", "Gift", "", "20", "", ""], ["Amber Band", "Meadow Lantern", "1955", "Folk", "Jazz shelf", "Gift", "", "20", "", ""], ["Atlas Kids", "Orbit Willow", "1988", "Pop", "Jazz shelf", "Twist & Shout", "", "", "", ""], ["Willow Club", "Echo Harbor", "1992", "Classical", "Dad's", "Gift", "", "", "", ""], ["Copper Band", "Meadow River", "1985", "Folk", "Dad's", "Gift", "", "20", "", ""], ["Lantern Kids", "Harbor Velvet", "1966", "Pop", "Dad's", "Wax Trax", "", "5", "", ""], ["Echo Orchestra", "Meadow Moon", "1974", "Pop", "Dad's", "Twist & Shout", "", "20", "", ""], ["Paper Kids", "Saffron Signal", "1969", "Folk", "Main", "Wax Trax", "", "", "", ""]], "tracks": {"neonsociety|harborwillow": [["Side A", "A1", "First Song", "3:21"], ["Side A", "A2", "Second Song", "4:02"], ["Side B", "B1", "Third Song", "5:00"], ["Side B", "B2", "Fourth Song", "2:50"]]}, "rel": {}, "prices": {}, "details": {"neonsociety|harborwillow": {"styles": "Synth-pop, New Wave", "label": "Sire", "press": "OP", "runtime": "15:13", "discogs": "1", "lowest": 8.5, "forSale": 12, "suggested": {"Poor (P)": 1, "Fair (F)": 2, "Good (G)": 3, "Good Plus (G+)": 4.5, "Very Good (VG)": 6, "Very Good Plus (VG+)": 10, "Near Mint (NM or M-)": 14, "Mint (M)": 20}}}, "lists": [{"name": "Friday mix", "by": "Dedub", "role": "admin", "items": [{"artist": "Neon Society", "album": "Harbor Willow", "side": "Side A", "n": "A1", "t": "First Song", "len": "3:21"}]}, {"name": "Sunday slow", "by": "Sam", "role": "guest", "items": [{"artist": "Silver Kids", "album": "Copper Static", "side": "Side A", "n": "A1", "t": "x", "len": ""}]}]};localStorage.setItem('rb-pass','"demo"');localStorage.setItem('rb-role','"admin"');window.fetch=function(u,o){var b=o&&o.body?JSON.parse(o.body):{};var r=b.action==='load'?L:{ok:true,role:'admin'};if(!b.action)return Promise.reject();return Promise.resolve({ok:true,json:function(){return Promise.resolve(r)}});};})();</script><script>window.addEventListener("error",function(e){var d=document.getElementById("dbg");if(!d){d=document.createElement("pre");d.id="dbg";d.style.cssText="position:fixed;left:0;bottom:0;z-index:99999;background:#fff;color:#c00;font:12px monospace;max-width:100%;white-space:pre-wrap;padding:6px";document.body.appendChild(d);}d.textContent+=e.message+" @"+(e.error&&e.error.stack||"").split("\n").slice(0,4).join(" | ")+"\n";});</script><script>
+(function(){
+"use strict";
+try{
+/* Dedubs Den of Discs, round 6 */
+const CFG = document.getElementById("rb-config");
+const SHEET_WRITE = (CFG&&CFG.getAttribute("data-write"))||"";
+const LIVE = !/claude|anthropic|usercontent/i.test(location.hostname);
+const ROOT = document.getElementById("rb");
+const $ = s=>ROOT.querySelector(s);
+const $$ = s=>[...ROOT.querySelectorAll(s)];
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function norm(s){return String(s||"").toLowerCase().replace(/^the\s+/,"").replace(/&/g,"and").replace(/[^a-z0-9]/g,"")}
+function hash(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
+function ls(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem(k)||"null");if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}}
+function money(n){ if(n==null||n===""||isNaN(+n)) return ""; n=+n; return "$"+(n%1?n.toFixed(2):String(n)); }
+function mk(i,o){o.i=i;o.key=norm(o.artist)+"|"+norm(o.title);return o}
+function val(id){ const e=$("#"+id); return e?e.value.trim():""; }
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+function lenMs(s){ const m=String(s||"").match(/^(\d+):(\d\d)$/); return m?(+m[1]*60+ +m[2])*1000:0; }
+function fmtLen(ms){ const s=Math.round(ms/1000); return Math.floor(s/60)+":"+String(s%60).padStart(2,"0"); }
+function sortName(r){ return (r.artist||"").replace(/^the\s+/i,"").toLowerCase(); }
+function letterOf(r){ const c=sortName(r).charAt(0).toUpperCase(); return /[A-Z]/.test(c)?c:"#"; }
+function valueOf(r){ return r.value!=null?r.value:r.cost; }
+/* Value can be a number or a range like "$4–$25 (Discogs)"; sorting uses the middle of the range */
+function vrange(s){ s=String(s||""); const m=s.replace(/,/g,"").match(/\d+(?:\.\d+)?/g)||[], src=(s.match(/\(([^)]+)\)/)||[])[1]||"";
+  const n=m.map(Number).filter(x=>x>0); if(!n.length) return {value:null};
+  const lo=n[0], hi=n.length>1&&/[–-]|to/.test(s)?n[1]:null;
+  return hi&&hi>lo?{value:Math.round((lo+hi)/2*100)/100,vlo:lo,vhi:hi,vsrc:src}:{value:lo,vsrc:src}; }
+function valueText(r){ if(r.vhi) return money(r.vlo)+"–"+money(r.vhi); const v=valueOf(r); return v?money(v)+(r.vsrc&&/lowest/i.test(r.vsrc)?"+":""):""; }
+function status(t,ms){ const s=$("#rb-status"); if(!s) return; s.textContent=t; s.hidden=!t; clearTimeout(status.t); if(t&&ms!==0) status.t=setTimeout(()=>s.hidden=true,ms||3500); }
+
+let RECS=[];
+let SDB={tracks:{},rel:{},prices:{},details:{},lists:[]};
+const DET_MINE={};
+let jn=0;
+const AUTH={role:ls("rb-role")||"", pass:ls("rb-pass")||"", name:ls("rb-guest")||"", legacy:false};
+
+const MOODS = {
+  "Cozy Sunday morning":["Folk","Singer-Songwriter","Soft Rock","Jazz","Easy Listening","Classical","New Age"],
+  "Party time":["Funk/Disco","Pop","Soul/R&B","New Wave","Electronic"],
+  "Turn it up loud":["Rock","Hard Rock","Prog Rock","Post-Punk"],
+  "Dinner with friends":["Jazz","Soul/R&B","Easy Listening","World","Blues","Gospel"],
+  "Rainy afternoon":["Folk","Folk Rock","Singer-Songwriter","Blues","Indie","New Age"],
+  "Road trip":["Rock","Country","Country Rock","Folk Rock","Soft Rock"],
+  "Late night":["Jazz","Blues","Electronic","Experimental","Indie"],
+  "Dance in the kitchen":["Funk/Disco","New Wave","Pop","Soul/R&B"],
+  "Something odd":["Comedy/Spoken Word","Soundtrack","Experimental","Children's","Holiday"]
+};
+function valueBand(c){ if(!c) return "No value"; if(c<5) return "Under $5"; if(c<10) return "$5 to 10"; if(c<20) return "$10 to 20"; if(c<40) return "$20 to 40"; return "$40 and up"; }
+const VALUE_ORDER=["Under $5","$5 to 10","$10 to 20","$20 to 40","$40 and up","No value"];
+const BINBY={
+  genre:{label:"Genre",of:r=>r.genre||"Other"},
+  year:{label:"Year",of:r=>r.year?Math.floor(r.year/10)*10+"s":"Year ?"},
+  coll:{label:"Collection",of:r=>r.coll||"Other"},
+  value:{label:"Value",of:r=>valueBand(valueOf(r))}
+};
+const state={mode:"dig",by:"genre",bin:"",q:"",now:null,pop:false,mood:"",eras:new Set(),view:"bin",flight:[],
+  layout:"a", crate:"flip", vibe:ls("rb-vibe")||"auto",
+  list:"all", djBy:"", wallBy:"artist"};
+
+/* designed sleeves while the real cover loads */
+let HUE={};
+function indexHues(){ HUE={}; const n={}; RECS.forEach(r=>n[r.genre]=(n[r.genre]||0)+1); Object.keys(n).sort((a,b)=>n[b]-n[a]).forEach((g,k)=>HUE[g]=Math.round((k*137.5)%360)); }
+function hueOf(r){ const b=(r.genre in HUE)?HUE[r.genre]:200; return (b+(hash(r.key)%40)-20+360)%360; }
+function sleeve(r){
+  const h=hash(r.artist+"|"+r.title), hue=hueOf(r), L=["L1","L2","L3","L4"][h%4], dark=(h>>>3)%3===0;
+  const s1=dark?`hsl(${hue} 38% 20%)`:`hsl(${hue} 62% ${70+((h>>>5)%14)}%)`;
+  const s2=dark?`hsl(${(hue+40)%360} 70% 58%)`:`hsl(${(hue+180)%360} 55% ${32+((h>>>7)%18)}%)`;
+  const s3=dark?`hsl(${hue} 30% 94%)`:`hsl(${hue} 60% 12%)`;
+  return `<div class="sleeve ${L}" data-i="${r.i}" style="--s1:${s1};--s2:${s2};--s3:${s3};--ang:${(h>>>9)%180}deg"><div class="art"></div><div class="t a">${esc(r.artist||"Unknown")}</div><div class="t n">${esc(r.title)}</div></div>`;
+}
+function backColor(r){ const c=COLORS[r.key]; return c&&c[0]?c[0]:`hsl(${hueOf(r)} 40% 42%)`; }
+function backFace(r){
+  const rel=SDB.rel[r.key];
+  return `<div class="face back" style="--bk:${backColor(r)}">${rel&&!NOBACK.has(rel)?`<img alt="" loading="lazy" src="https://coverartarchive.org/release/${esc(rel)}/back-250" onerror="this.remove();window.__rbNoBack&&window.__rbNoBack('${esc(rel)}')">`:""}</div>`;
+}
+const NOBACK=new Set(ls("rb-noback")||[]);
+window.__rbNoBack=id=>{ NOBACK.add(id); if(NOBACK.size%5===0) ls("rb-noback",[...NOBACK].slice(-3000)); };
+
+/* ---------- the sheet ---------- */
+function rowsToRecs(rows){
+  rows=rows.map(r=>r.map(x=>x==null?"":String(x))); const h=rows.shift().map(x=>x.trim().toLowerCase());
+  const col=(...ks)=>{ for(const k of ks){ const a=h.findIndex(x=>x===k); if(a>=0) return a; } for(const k of ks){ const a=h.findIndex(x=>x.startsWith(k)); if(a>=0) return a; } return -1; };
+  const A=col("artist","album artist"), T=h.findIndex(x=>(x.startsWith("album")||x.startsWith("title"))&&!x.includes("artist")), Y=col("year"), G=col("genre"), S=col("collection","shelf"), F=col("from","source"), C=col("cost"), V=col("value","resale"), Q=h.findIndex(x=>x==="quality"||x==="condition"), CV=col("cover");
+  const g=(r,k)=>k<0?"":(r[k]||"").trim(), num=s=>{ const n=parseFloat(String(s).replace(/[$,]/g,"")); return isFinite(n)&&n>0?n:null; };
+  return rows.filter(r=>g(r,A)||g(r,T)).map((r,i)=>{ const y=parseInt(g(r,Y),10); return mk(i,{artist:g(r,A),title:g(r,T),year:y>1800&&y<2100?y:null,genre:g(r,G)||"Other",coll:g(r,S),from:g(r,F),cost:num(g(r,C)),...vrange(g(r,V)),quality:g(r,Q),cover:g(r,CV)}); });
+}
+function applyLoad(d,fromCache){
+  if(!d||!d.records||d.records.length<2) return false;
+  const got=rowsToRecs(d.records); if(!got.length) return false;
+  const keepNow=state.now!=null&&RECS[state.now]?RECS[state.now].key:null;
+  RECS=got;
+  SDB={tracks:d.tracks||{},rel:d.rel||{},prices:d.prices||{},details:Object.assign({},d.details||{},DET_MINE),lists:d.lists||[]};
+  indexHues();
+  state.now=keepNow?(RECS.find(r=>r.key===keepNow)||{i:null}).i:null;
+  return true;
+}
+function saveCache(d){ try{ localStorage.setItem("rb-cache",JSON.stringify({t:Date.now(),d})); }catch(e){ try{ localStorage.removeItem("rb-cache"); }catch(x){} } }
+function readCache(){ try{ const c=JSON.parse(localStorage.getItem("rb-cache")||"null"); return c&&c.d?c.d:null; }catch(e){ return null; } }
+
+async function api(action,body,pass){
+  const r=await fetch(SHEET_WRITE,{method:"POST",body:JSON.stringify(Object.assign({passcode:pass||AUTH.pass,action},body||{}))});
+  return r.json();
+}
+/* old script (before this update): the record list comes from the public read */
+function legacyGet(){
+  return new Promise((res,rej)=>{
+    const cb="__rbdb"+(jn++), s=document.createElement("script"); let done=false;
+    const fin=(v,e)=>{ if(done) return; done=true; try{delete window[cb]}catch(x){} s.remove(); e?rej(e):res(v); };
+    window[cb]=d=>fin(d); s.onerror=()=>fin(null,new Error("blocked")); setTimeout(()=>fin(null,new Error("no answer")),45000);
+    s.src=SHEET_WRITE+(SHEET_WRITE.indexOf("?")>=0?"&":"?")+"callback="+cb; document.head.appendChild(s);
+  });
+}
+async function signIn(pass,name){
+  let d; try{ d=await api("auth",{name},pass); }catch(e){ return {ok:false,error:"Couldn't reach the sheet. Check your connection and try again."}; }
+  if(d&&d.ok) return {ok:true,role:d.role};
+  if(d&&d.error==="Unknown action.") return {ok:true,role:"admin",legacy:true};
+  return {ok:false,error:d&&d.error==="Wrong passcode."?"That passcode didn't work.":(d&&d.error)||"That didn't work."};
+}
+async function loadAll(){
+  let d=null;
+  if(AUTH.legacy){ const g=await legacyGet(); d=Object.assign({lists:[],details:{},rel:{}},g); }
+  else{ d=await api("load"); if(d&&d.error==="Unknown action."){ AUTH.legacy=true; return loadAll(); } }
+  if(!d||d.ok===false) throw new Error(d&&d.error||"no data");
+  if(d.role&&d.role!==AUTH.role){ AUTH.role=d.role; ls("rb-role",AUTH.role); }
+  if(applyLoad(d)) saveCache(d);
+  return d;
+}
+
+/* writes that every signed-in visitor helps with: track lists, prices, covers, Discogs details */
+const WQ={tracks:[],prices:[],covers:[],details:[]}; let wqT=null;
+function queueWrite(kind,item){ if(!AUTH.pass||!SHEET_WRITE) return; if(AUTH.legacy&&kind==="details") return; WQ[kind].push(item); clearTimeout(wqT); wqT=setTimeout(flushWrites,15000); }
+function flushWrites(){
+  if(!AUTH.pass||!SHEET_WRITE) return;
+  Object.keys(WQ).forEach(kind=>{ const items=WQ[kind].splice(0); if(!items.length) return;
+    fetch(SHEET_WRITE,{method:"POST",mode:"no-cors",keepalive:true,body:JSON.stringify({passcode:AUTH.pass,action:kind,items})}).catch(()=>{}); });
+}
+window.addEventListener("pagehide",flushWrites);
+
+/* ---------- lookups (in the visitor's browser, cached, saved back to the sheet) ---------- */
+const MB="https://musicbrainz.org/ws/2/";
+const INFO=ls("rb-info")||{};
+let mbChain=Promise.resolve();
+/* MusicBrainz allows about one call a second; when it says "busy" (503), wait and try again */
+async function mbTry(url){ for(let t=0;t<3;t++){ try{ const r=await fetch(url,{headers:{Accept:"application/json"}}); if(r.status===503){ await wait(2500*(t+1)); continue; } return r.ok?await r.json():null; }catch(e){ await wait(2000); } } return null; }
+function mbGet(url){ const p=mbChain.then(()=>mbTry(url)); mbChain=p.then(()=>wait(1100)); return p; }
+function qq(s){ return '"'+String(s).replace(/["\\]/g," ")+'"'; }
+const VARIOUS=/^(various artists|various|classical|soundtrack|orchestra)$/i;
+async function findReleases(artist,title){
+  const query=`release:${qq(title)}`+(artist&&!VARIOUS.test(artist)?` AND artist:${qq(artist)}`:"");
+  const d=await mbGet(`${MB}release?query=${encodeURIComponent(query)}&fmt=json&limit=15`);
+  return (d&&d.releases)||[];
+}
+async function releaseInfo(id){
+  const d=await mbGet(`${MB}release/${id}?inc=recordings+url-rels&fmt=json`); if(!d) return null;
+  const tracks=[]; (d.media||[]).forEach(m=>(m.tracks||[]).forEach(t=>tracks.push({n:t.number||String(t.position),t:t.title,len:t.length,disc:m.position})));
+  let sides=[]; const byLetter=tracks.length&&tracks.every(t=>/^[A-Z]/i.test(t.n));
+  const m=new Map();
+  tracks.forEach(t=>{ const s=byLetter?"Side "+t.n[0].toUpperCase():((d.media||[]).length>1?"Disc "+t.disc:"Tracks"); if(!m.has(s)) m.set(s,[]); m.get(s).push(t); });
+  sides=[...m].map(([k,v])=>({name:k,tracks:v}));
+  let discogs=null; (d.relations||[]).forEach(rel=>{ const u=rel.url&&rel.url.resource||""; const mm=u.match(/discogs\.com\/release\/(\d+)/); if(mm) discogs=mm[1]; });
+  return {id,sides,discogs,date:d.date||""};
+}
+function bestRelease(list,year){
+  const vin=list.filter(x=>(x.media||[]).some(m=>/vinyl/i.test(m.format||"")));
+  const pool=vin.length?vin:list; if(!pool.length) return null;
+  if(year){ const y=pool.find(x=>(x.date||"").startsWith(String(year))); if(y) return y; }
+  return pool[0];
+}
+function fromSheet(r){
+  const rows=SDB.tracks[r.key]; if(!rows||!rows.length) return null;
+  const m=new Map(); rows.forEach(x=>{ const s=String(x[0]||"Tracks"); if(!m.has(s)) m.set(s,[]); m.get(s).push({n:String(x[1]),t:String(x[2]),len:lenMs(x[3])}); });
+  return {id:SDB.rel[r.key]||"",sides:[...m].map(([k,v])=>({name:k,tracks:v})),sheet:true};
+}
+async function lookup(r){
+  const sh=fromSheet(r); if(sh) return sh;
+  if(INFO[r.key]&&INFO[r.key].sides&&INFO[r.key].t>Date.now()-1000*60*60*24*30){ saveInfo(r,INFO[r.key]); return INFO[r.key]; }
+  if(!LIVE) return null;
+  const rel=bestRelease(await findReleases(r.artist,r.title),r.year); if(!rel) return null;
+  const info=await releaseInfo(rel.id); if(!info) return null;
+  info.t=Date.now(); INFO[r.key]=info; try{ ls("rb-info",INFO); }catch(e){} saveInfo(r,info); return info;
+}
+function saveInfo(r,info){
+  if(!info||!info.sides||!info.sides.length||(SDB.tracks[r.key]&&SDB.tracks[r.key].length)) return;
+  queueWrite("tracks",{key:r.key,artist:r.artist,album:r.title,rel:info.id,sides:info.sides.map(s=>({name:s.name,tracks:s.tracks.map(x=>({n:x.n,t:x.t,len:x.len?fmtLen(x.len):""}))}))});
+  SDB.tracks[r.key]=[].concat(...info.sides.map(s=>s.tracks.map(x=>[s.name,x.n,x.t,x.len?fmtLen(x.len):""])));
+  if(info.id) SDB.rel[r.key]=info.id;
+}
+
+/* Discogs details come through the sheet script, which holds the token */
+const DGASK=new Map();
+function details(r){
+  const d=SDB.details[r.key]; if(d) return Promise.resolve(d);
+  if(DGASK.has(r.key)) return DGASK.get(r.key);
+  const p=(async()=>{
+    if(!LIVE||!AUTH.pass) return null;
+    if(AUTH.legacy){ const old=SDB.prices[r.key]; return old?{lowest:old[1],forSale:old[2],discogs:old[0],suggested:{}}:null; }
+    try{ const d=await api("discogs",{key:r.key,artist:r.artist,album:r.title,year:r.year||""}); if(d&&d.ok){ SDB.details[r.key]=DET_MINE[r.key]=d; if(r.value==null&&d.value) Object.assign(r,vrange(d.value)); return d; } }catch(e){}
+    return null;
+  })();
+  DGASK.set(r.key,p); return p;
+}
+
+/* ---------- covers (Apple catalogue) ---------- */
+const COVERS=ls("rb-covers")||{};
+const cq=[], cqd=new Set(); let cbusy=false;
+function coverOf(r){ return r.cover||COVERS[r.key]||""; }
+function hydrateCovers(scope){
+  (scope||ROOT).querySelectorAll(".sleeve[data-i]").forEach(el=>{
+    const r=RECS[+el.dataset.i]; if(!r) return; const c=coverOf(r);
+    if(c){ if(!el.querySelector(".cover")) putCover(el,c); }
+    else if(LIVE&&COVERS[r.key]!==0&&!cqd.has(r.i)){ cqd.add(r.i); cq.push(r.i); }
+  }); pump();
+}
+function putCover(el,url){ const img=new Image(); img.className="cover"; img.alt=""; img.loading="lazy"; img.decoding="async"; img.onload=()=>img.classList.add("on"); img.onerror=()=>img.remove(); img.src=url; el.appendChild(img); }
+function jsonp(url){
+  return new Promise(res=>{
+    const cb="__rbj"+(jn++), s=document.createElement("script"); let done=false;
+    const fin=v=>{ if(done) return; done=true; try{delete window[cb]}catch(e){} s.remove(); res(v); };
+    window[cb]=d=>fin(d); s.onerror=()=>fin(null); setTimeout(()=>fin(null),9000);
+    s.src=url+(url.includes("?")?"&":"?")+"callback="+cb; document.head.appendChild(s);
+  });
+}
+const HITS={};
+async function itunesHit(r){
+  const k=norm(r.artist)+"|"+norm(r.title); if(k in HITS) return HITS[k];
+  const d=await jsonp(`https://itunes.apple.com/search?entity=album&limit=8&term=${encodeURIComponent((VARIOUS.test(r.artist)?"":r.artist+" ")+r.title)}`);
+  if(!d) return null;
+  const want=norm(r.artist), t=norm(r.title);
+  const hit=(d.results||[]).find(x=>norm(x.artistName).includes(want.slice(0,8))&&norm(x.collectionName).startsWith(t.slice(0,6)))||(d.results||[]).find(x=>norm(x.collectionName).startsWith(t.slice(0,8)));
+  return HITS[k]=hit||0;
+}
+/* second cover source: the Cover Art Archive, through a strict MusicBrainz match */
+async function caaCover(r){
+  const q=`releasegroup:${qq(r.title)}`+(r.artist&&!VARIOUS.test(r.artist)?` AND artist:${qq(r.artist)}`:"");
+  const d=await mbGet(`${MB}release-group?query=${encodeURIComponent(q)}&fmt=json&limit=8`); if(!d) return null;
+  const t=norm(r.title), a=norm(r.artist), va=VARIOUS.test(r.artist||"");
+  const ok=x=>{ const xt=norm(x.title), xa=norm((x["artist-credit"]||[]).map(c=>c.name+(c.joinphrase||"")).join(""));
+    const tOK=xt===t||(Math.min(xt.length,t.length)>=6&&(xt.startsWith(t)||t.startsWith(xt)));
+    const aOK=va||(xa.length>0&&a.length>0&&(xa.includes(a.slice(0,8))||a.includes(xa.slice(0,8))));
+    return tOK&&aOK; };
+  const hit=(d["release-groups"]||[]).find(ok); if(!hit) return 0;
+  const u=`https://coverartarchive.org/release-group/${hit.id}/front-500`;
+  return await new Promise(res=>{ const im=new Image(); let done=false; const fin=v=>{ if(!done){ done=true; res(v); } };
+    im.onload=()=>fin(u); im.onerror=()=>fin(0); setTimeout(()=>fin(0),15000); im.src=u; });
+}
+async function itunesCover(r){ const h=await itunesHit(r); return h?h.artworkUrl100.replace("100x100bb","600x600bb"):h; }
+async function pump(){
+  if(cbusy||!cq.length) return; cbusy=true;
+  const vis=new Set($$(".sleeve[data-i]").map(e=>+e.dataset.i));
+  cq.sort((a,b)=>(vis.has(b)?1:0)-(vis.has(a)?1:0));
+  const i=cq.shift(); cqd.delete(i); const r=RECS[i];
+  const url=r?await itunesCover(r):null;
+  if(r&&url!==null&&RECS[i]===r){ COVERS[r.key]=url; ls("rb-covers",COVERS);
+    if(url&&!r.cover) queueWrite("covers",{key:r.key,artist:r.artist,album:r.title,cover:url});
+    $$(`.sleeve[data-i="${i}"]`).forEach(el=>{ if(url&&!el.querySelector(".cover")) putCover(el,url); });
+    if(state.now===i&&url) renderDeck(); }
+  setTimeout(()=>{ cbusy=false; pump(); }, url===null?6000:2400);
+}
+
+/* ---------- colours from the front cover (computed once per album, kept in this browser) ---------- */
+const COLORS=ls("rb-colors")||{};
+const colorAsk=new Map();
+function coverColors(r){
+  if(COLORS[r.key]) return Promise.resolve(COLORS[r.key]);
+  const url=coverOf(r); if(!url||!LIVE) return Promise.resolve(null);
+  if(colorAsk.has(r.key)) return colorAsk.get(r.key);
+  const p=new Promise(res=>{
+    const img=new Image(); img.crossOrigin="anonymous";
+    img.onload=()=>{ try{
+      const c=document.createElement("canvas"); c.width=c.height=24; const x=c.getContext("2d"); x.drawImage(img,0,0,24,24);
+      const px=x.getImageData(0,0,24,24).data, bins={};
+      for(let k=0;k<px.length;k+=4){ const R=px[k],G=px[k+1],B=px[k+2]; const key=(R>>5)+","+(G>>5)+","+(B>>5); const b=bins[key]||(bins[key]={n:0,r:0,g:0,b:0}); b.n++; b.r+=R; b.g+=G; b.b+=B; }
+      const hex=b=>"#"+[b.r,b.g,b.b].map(v=>Math.round(v/b.n).toString(16).padStart(2,"0")).join("");
+      const sat=b=>{ const R=b.r/b.n,G=b.g/b.n,B=b.b/b.n,mx=Math.max(R,G,B),mn=Math.min(R,G,B); return mx?((mx-mn)/mx):0; };
+      const list=Object.values(bins).sort((a,b)=>b.n-a.n);
+      const vivid=list.filter(b=>sat(b)>0.3).sort((a,b)=>b.n*sat(b)-a.n*sat(a));
+      const out=[hex(list[0]),hex(vivid[0]||list[1]||list[0]),hex(vivid[1]||list[2]||list[0])];
+      COLORS[r.key]=out; ls("rb-colors",COLORS); res(out);
+    }catch(e){ res(null); } };
+    img.onerror=()=>res(null);
+    img.src=url.replace("600x600bb","100x100bb");
+  });
+  colorAsk.set(r.key,p); return p;
+}
+
+/* ---------- 30-second previews (Apple) ---------- */
+const PREV={};
+async function previews(r){
+  if(PREV[r.key]) return PREV[r.key];
+  const h=await itunesHit(r); if(!h||!h.collectionId) return PREV[r.key]=[];
+  const d=await jsonp(`https://itunes.apple.com/lookup?id=${h.collectionId}&entity=song&limit=60`);
+  return PREV[r.key]=((d&&d.results)||[]).filter(x=>x.wrapperType==="track"&&x.previewUrl).map(x=>({t:norm(x.trackName),url:x.previewUrl}));
+}
+function previewFor(list,title){
+  const t=norm(title.replace(/\s*\(.*?\)\s*/g," ")); if(!t) return null;
+  const hit=list.find(x=>x.t===t)||list.find(x=>x.t.startsWith(t.slice(0,8))||t.startsWith(x.t.slice(0,8)));
+  return hit?hit.url:null;
+}
+const AUDIO={el:null,btn:null};
+function stopAudio(){ if(AUDIO.el){ AUDIO.el.pause(); AUDIO.el=null; } if(AUDIO.btn){ AUDIO.btn.classList.remove("on"); const i=AUDIO.btn.querySelector("i"); if(i) i.textContent="▶"; AUDIO.btn=null; } }
+function playPreview(btn,url){
+  const same=AUDIO.btn===btn; stopAudio(); if(same||!url) return;
+  const a=new Audio(url); AUDIO.el=a; AUDIO.btn=btn; btn.classList.add("on"); const i=btn.querySelector("i"); if(i) i.textContent="■";
+  a.onended=stopAudio; a.play().catch(stopAudio);
+}
+
+/* ---------- vibes: a faint genre pattern behind the panels, tinted by colour ---------- */
+function svgUrl(w,h,body){ return `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='${w}' height='${h}'>${body}</svg>`)}")`; }
+const PATTERNS={
+  dots:c=>svgUrl(18,18,`<circle cx='4.5' cy='4.5' r='2.6' fill='${c}'/><circle cx='13.5' cy='13.5' r='2.6' fill='${c}'/>`),
+  squiggle:c=>svgUrl(64,64,`<path d='M4 18q6-10 12 0t12 0 12 0' fill='none' stroke='${c}' stroke-width='3' stroke-linecap='round'/><path d='M40 44l8-12 8 12z' fill='none' stroke='${c}' stroke-width='2.5'/><circle cx='14' cy='48' r='4' fill='${c}'/>`),
+  hatch:c=>svgUrl(16,16,`<path d='M-4 4l8-8M0 16L16 0M12 20l8-8' stroke='${c}' stroke-width='3.5'/>`),
+  crosshatch:c=>svgUrl(14,14,`<path d='M0 14L14 0M-3 3l6-6M11 17l6-6M0 0l14 14M-3 11l6 6M11-3l6 6' stroke='${c}' stroke-width='1.6'/>`),
+  rings:c=>svgUrl(60,60,`<g fill='none' stroke='${c}' stroke-width='2'><circle cx='30' cy='30' r='6'/><circle cx='30' cy='30' r='14'/><circle cx='30' cy='30' r='22'/><circle cx='30' cy='30' r='30'/></g>`),
+  wood:c=>svgUrl(120,40,`<g fill='none' stroke='${c}' stroke-width='1.5'><path d='M0 8q30-6 60 0t60 0'/><path d='M0 20q30 5 60-1t60 1'/><path d='M0 32q30-4 60 1t60-1'/><ellipse cx='84' cy='20' rx='8' ry='3'/></g>`),
+  gingham:c=>svgUrl(24,24,`<rect width='12' height='24' fill='${c}' opacity='.5'/><rect width='24' height='12' fill='${c}' opacity='.5'/>`),
+  keys:c=>svgUrl(56,40,`<rect x='0' y='0' width='56' height='40' fill='none' stroke='${c}' stroke-width='1'/><path d='M8 0v40M16 0v40M24 0v40M32 0v40M40 0v40M48 0v40' stroke='${c}' stroke-width='1'/><rect x='5' y='0' width='6' height='24' fill='${c}'/><rect x='13' y='0' width='6' height='24' fill='${c}'/><rect x='29' y='0' width='6' height='24' fill='${c}'/><rect x='37' y='0' width='6' height='24' fill='${c}'/><rect x='45' y='0' width='6' height='24' fill='${c}'/>`),
+  chevron:c=>svgUrl(28,16,`<path d='M0 12l7-7 7 7 7-7 7 7' fill='none' stroke='${c}' stroke-width='3'/>`),
+  checker:c=>svgUrl(24,24,`<rect width='12' height='12' fill='${c}'/><rect x='12' y='12' width='12' height='12' fill='${c}'/>`),
+  circuit:c=>svgUrl(48,48,`<g fill='none' stroke='${c}' stroke-width='1.6'><path d='M0 12h18v14h14V6h16M24 48V34h12M6 48V36h10'/></g><g fill='${c}'><circle cx='18' cy='12' r='2.5'/><circle cx='32' cy='26' r='2.5'/><circle cx='36' cy='34' r='2.5'/><circle cx='16' cy='36' r='2.5'/></g>`),
+  waves:c=>svgUrl(60,24,`<path d='M0 12q15-10 30 0t30 0' fill='none' stroke='${c}' stroke-width='2'/>`),
+  pinstripe:c=>svgUrl(14,10,`<path d='M7 0v10' stroke='${c}' stroke-width='1.2'/>`),
+  notebook:c=>svgUrl(40,22,`<path d='M0 21h40' stroke='${c}' stroke-width='1.2'/><path d='M8 0v22' stroke='#E0442E' stroke-width='1' opacity='.6'/>`),
+  staff:c=>svgUrl(80,60,`<g stroke='${c}' stroke-width='1.1'><path d='M0 10h80M0 16h80M0 22h80M0 28h80M0 34h80'/></g><ellipse cx='26' cy='25' rx='4.5' ry='3.2' fill='${c}' transform='rotate(-20 26 25)'/><path d='M30 24V6' stroke='${c}' stroke-width='1.4'/>`),
+  sprocket:c=>svgUrl(40,30,`<rect x='0' y='0' width='40' height='30' fill='none'/><g fill='${c}'><rect x='4' y='3' width='8' height='6' rx='1.5'/><rect x='24' y='3' width='8' height='6' rx='1.5'/><rect x='4' y='21' width='8' height='6' rx='1.5'/><rect x='24' y='21' width='8' height='6' rx='1.5'/></g>`),
+  snow:c=>svgUrl(40,40,`<g stroke='${c}' stroke-width='1.6' stroke-linecap='round'><path d='M10 4v12M4 10h12M6 6l8 8M14 6l-8 8'/><path d='M30 26v8M26 30h8'/></g>`)
+};
+const GENRE_PAT={"Pop":"dots","Children's":"dots","New Wave":"squiggle","Post-Punk":"squiggle","Rock":"hatch","Hard Rock":"crosshatch","Prog Rock":"rings","Experimental":"rings",
+  "Folk":"wood","Folk Rock":"wood","World":"wood","Country":"gingham","Country Rock":"gingham","Jazz":"keys","Soul/R&B":"chevron","Gospel":"chevron","Funk/Disco":"checker",
+  "Electronic":"circuit","Easy Listening":"waves","Soft Rock":"waves","New Age":"waves","Blues":"pinstripe","Singer-Songwriter":"notebook","Indie":"notebook","Comedy/Spoken Word":"notebook",
+  "Classical":"staff","Soundtrack":"sprocket","Holiday":"snow"};
+const PAT_HUE={dots:350,squiggle:300,hatch:12,crosshatch:220,rings:270,wood:30,gingham:0,keys:45,chevron:330,checker:280,circuit:170,waves:200,pinstripe:215,notebook:210,staff:40,sprocket:25,snow:195};
+function hexToHsl(hx){ const n=parseInt(hx.slice(1),16), r=(n>>16&255)/255, g=(n>>8&255)/255, b=(n&255)/255, mx=Math.max(r,g,b), mn=Math.min(r,g,b); let h=0,s=0; const l=(mx+mn)/2;
+  if(mx!==mn){ const d=mx-mn; s=l>.5?d/(2-mx-mn):d/(mx+mn); h=mx===r?(g-b)/d+(g<b?6:0):mx===g?(b-r)/d+2:(r-g)/d+4; h*=60; } return [Math.round(h),Math.round(s*100),Math.round(l*100)]; }
+function applyVibe(){
+  let pat=null, hue=null, sat=55;
+  if(state.vibe==="plain"){ pat=null; }
+  else if(state.vibe==="auto"){
+    const r=state.now!=null?RECS[state.now]:null;
+    if(r){ pat=GENRE_PAT[r.genre]||"dots"; const c=COLORS[r.key];
+      if(c){ const h=hexToHsl(c[1]||c[0]); hue=h[0]; sat=Math.max(35,Math.min(80,h[1])); }
+      else hue=PAT_HUE[pat]; }
+  } else { pat=GENRE_PAT[state.vibe]||"dots"; hue=PAT_HUE[pat]; }
+  const st=ROOT.style;
+  if(hue==null){ ["--bg","--hi","--accent","--pat","--ctl","--ctlb"].forEach(k=>st.removeProperty(k)); }
+  else{
+    st.setProperty("--bg",`hsl(${hue} ${Math.round(sat*0.5)}% 95%)`);
+    st.setProperty("--ctl",`hsl(${hue} ${Math.round(sat*0.35)}% 92%)`);
+    st.setProperty("--ctlb",`hsl(${hue} ${Math.round(sat*0.3)}% 78%)`);
+    st.setProperty("--hi",`hsl(${hue} ${Math.round(sat*0.9)}% 86%)`);
+    st.setProperty("--accent",`hsl(${(hue+180)%360} 70% 42%)`);
+    st.setProperty("--pat",pat?PATTERNS[pat](`hsl(${hue} ${sat}% 40%)`):"none");
+    ROOT.style.setProperty("--patop",".5");
+  }
+  $$("[data-vibe]").forEach(b=>b.classList.toggle("on",b.dataset.vibe===state.vibe));
+  const sel=$("#rb-vibesel"); if(sel) sel.value=(state.vibe==="auto"||state.vibe==="plain")?"":state.vibe;
+}
+function setVibe(v){ state.vibe=v; ls("rb-vibe",v); applyVibe(); }
+
+/* ---------- the store's props: each one comes alive when the mouse moves over it (or on a tap) ---------- */
+function sceneGo(el){
+  if(!el||el.classList.contains("go")) return;
+  el.classList.add("go"); clearTimeout(el._sg);
+  el._sg=setTimeout(()=>el.classList.remove("go"),+(el.getAttribute("data-anim")||1500));
+}
+ROOT.addEventListener("mouseover",e=>{ const el=e.target.closest&&e.target.closest(".scene"); if(el) sceneGo(el); });
+ROOT.addEventListener("pointerdown",e=>{ if(e.pointerType==="mouse") return; const el=e.target.closest&&e.target.closest(".scene"); if(el) sceneGo(el); },true);
+const NEON=`<span class="scene neon" data-anim="1600" aria-hidden="true"><svg viewBox="0 0 92 40" width="92" height="40"><rect x="1" y="1" width="90" height="38" rx="8" fill="#26211E" stroke="#1B1D21" stroke-width="1.5"/><path d="M46 1 V-8" stroke="#1B1D21"/><text class="nt" x="46" y="27" text-anchor="middle">OPEN</text><rect class="nb" x="6" y="6" width="80" height="28" rx="6" fill="none" stroke-width="1.6"/></svg></span>`;
+const GUMBALL=`<button class="gumball scene" id="rb-gum" data-anim="900" title="Gumball pick: one random record from your Pick for me settings" aria-label="Gumball pick: play one random record"><svg viewBox="0 0 44 58" width="34" height="45" aria-hidden="true">
+ <circle cx="22" cy="18" r="16" fill="rgba(255,255,255,.85)" stroke="#2A2622" stroke-width="1.6"/>
+ <g class="balls">${[[15,14,"#E0442E"],[25,21,"#FFD84D"],[28,11,"#3A8F5C"],[17,24,"#2E5E8C"],[22,16,"#F2A07B"],[11,19,"#7B3FA0"],[30,25,"#E0442E"]].map(([x,y,c])=>`<circle cx="${x}" cy="${y}" r="3.6" fill="${c}" stroke="rgba(0,0,0,.25)" stroke-width=".6"/>`).join("")}</g>
+ <rect x="12" y="33" width="20" height="16" rx="2" fill="#C8361F" stroke="#2A2622" stroke-width="1.4"/><circle class="knob" cx="22" cy="40" r="3.4" fill="#F5E9C8" stroke="#2A2622"/>
+ <rect x="8" y="49" width="28" height="7" rx="1.5" fill="#2A2622"/><circle class="drop" cx="31" cy="46" r="3.6" fill="#FFD84D" stroke="rgba(0,0,0,.3)" stroke-width=".6"/></svg><span>Gumball pick</span></button>`;
+function gumballPick(){
+  const g=$("#rb-gum"); if(!g||g.classList.contains("turning")) return;
+  const pl=pickPool(); if(!pl.length){ status("No records fit your Pick for me settings."); return; }
+  g.classList.add("turning");
+  setTimeout(()=>{ g.classList.remove("turning"); let n; do{ n=pl[Math.floor(Math.random()*pl.length)].i }while(pl.length>1&&n===state.now);
+    if(state.mode!=="dig"){ state.mode="dig"; renderAll(); } play(n); },RM?0:900);
+}
+
+/* ---------- the aisle: two mirrored rows of bins facing each other, drawn as an axonometric ----------
+   Every bin has the same depth. Records stand at the same spacing in every bin, so a bin is as long as its record count.
+   The left row's titles sit on the left, the right row's on the right. Scrolling walks you down the aisle. */
+function binsList(){
+  const f=BINBY[state.by].of, m=new Map();
+  RECS.forEach(r=>{ const k=f(r); if(!m.has(k)) m.set(k,[]); m.get(k).push(r); });
+  let arr=[...m.entries()].map(([k,v])=>({key:k,label:k,recs:v.sort((a,b)=>sortName(a).localeCompare(sortName(b)))}));
+  if(state.by==="year") arr.sort((a,b)=>a.key==="Year ?"?1:b.key==="Year ?"?-1:a.key.localeCompare(b.key));
+  else if(state.by==="value") arr.sort((a,b)=>VALUE_ORDER.indexOf(a.key)-VALUE_ORDER.indexOf(b.key));
+  else arr.sort((a,b)=>b.recs.length-a.recs.length);
+  return arr;
+}
+function poly(pts,fill,stroke,w,cls){ return `<polygon${cls?` class="${cls}"`:""} points="${pts.map(p=>p[0].toFixed(1)+","+p[1].toFixed(1)).join(" ")}" style="fill:${fill};stroke:${stroke};stroke-width:${w||1}px;stroke-linejoin:round"/>`; }
+function cssv(n,d){ const v=getComputedStyle(ROOT).getPropertyValue(n).trim(); return v||d; }
+const AX={KX:-0.24,KY:-0.72,SY:0.94};                      /* the axonometric: heights lean up and to the left */
+function A(x,y,z){ return [x+AX.KX*z, y*AX.SY+AX.KY*z]; }
+function renderBins(){
+  const sc=$("#rb-bscroll"); if(!sc) return;
+  const list=binsList(), W=Math.max(300,sc.clientWidth-4);
+  const D=60, WK=44, SP=2.6, PAD=7, GAP=16, HR=36, LIP=11, RISER=50, END=11, TOP=58;   /* bin depth, walkway, record spacing, record height... */
+  const LZ=Math.max(64,Math.min(150,(W-2*D-WK-14)/2));
+  const LX0=LZ+12, LX1=LX0+D, RX0=LX1+WK, RX1=RX0+D;
+  /* fill the shorter row next, keeping the sort order */
+  const rows=[[],[]], len=[TOP,TOP];
+  list.forEach(b=>{ const L=b.recs.length*SP+PAD*2, side=len[0]<=len[1]?0:1; b.side=side; b.y0=len[side]; b.L=L; len[side]+=L+GAP; rows[side].push(b); });
+  const ln="#2A2622", wood="#C9A06B", wood2="#A87D4A", woodTop="#E2C495", inside="#F1E6D2", acc=cssv("--accent","#E0442E"), txt=cssv("--ink","#16181C"), mut=cssv("--muted","#4D525B");
+  const H=Math.ceil(Math.max(len[0],len[1])*AX.SY+30);
+  let s=`<defs><pattern id="rb-tile" width="22" height="22" patternUnits="userSpaceOnUse"><rect width="22" height="22" fill="#F3EFE6"/><rect width="11" height="11" fill="#E4DCCB"/><rect x="11" y="11" width="11" height="11" fill="#E4DCCB"/></pattern></defs>`;
+  /* the floor of the walkway, in checker tiles */
+  s+=`<rect x="${LX1}" y="0" width="${WK}" height="${H}" fill="url(#rb-tile)"/>`;
+  s+=`<line x1="${LX1}" x2="${LX1}" y1="0" y2="${H}" stroke="#D4CBB8"/><line x1="${RX0}" x2="${RX0}" y1="0" y2="${H}" stroke="#D4CBB8"/>`;
+  /* draw from far to near: top of the aisle first, the left row (farther) before the right row */
+  const order=list.slice().sort((a,b)=>a.y0-b.y0||a.side-b.side);
+  order.forEach(b=>{
+    const n=b.recs.length, on=b.key===state.bin, left=b.side===0, x0=left?LX0:RX0, x1=x0+D, y0=b.y0, y1=y0+b.L;
+    const out=left?x0:x1, aisle=left?x1:x0;                    /* outer side carries the riser, the aisle side the low lip */
+    const P=(x,y,z)=>A(x,y,z);
+    let g=`<g class="bin${on?" on":""}" data-k="${esc(b.key)}" tabindex="0" role="button" aria-label="${esc(b.label)}, ${n} record${n===1?"":"s"}"><title>${esc(b.label)}: ${n} records</title>`;
+    g+=poly([P(x0,y0,0),P(x1,y0,0),P(x1,y1,0),P(x0,y1,0)],inside,ln,1);
+    const riser=()=>{ g+=poly([P(out,y0,0),P(out,y1,0),P(out,y1,RISER),P(out,y0,RISER)],left?wood2:wood,ln,1.1);
+      g+=poly([P(out,y0,RISER-13),P(out,y1,RISER-13),P(out,y1,RISER),P(out,y0,RISER)],on?acc:(left?"#3B3430":"#3B3430"),ln,1); };
+    const lip=()=>g+=poly([P(aisle,y0,0),P(aisle,y1,0),P(aisle,y1,LIP),P(aisle,y0,LIP)],on?acc:wood,ln,on?1.6:1.1);
+    const end=y=>g+=poly([P(x0,y,0),P(x1,y,0),P(x1,y,END),P(x0,y,END)],woodTop,ln,1);
+    if(left) riser(); else lip();
+    end(y0);
+    /* the records: one thin card per record, same spacing everywhere; the front one shows its cover */
+    const xa=x0+4, xb=x1-4;
+    for(let j=0;j<n;j++){
+      const r=b.recs[j], y=y0+PAD+j*SP+SP*0.5, h=HR-(hash(r.key)%4), lean=-4;
+      const pts=[P(xa,y,0),P(xb,y,0),P(xb,y+lean,h),P(xa,y+lean,h)];
+      const last=j===n-1, fill=`hsl(${hueOf(r)} 50% ${58+(hash(r.key)%22)}%)`;
+      g+=`<g class="rk" style="--d:${Math.round(j/n*520)}ms">`+poly(pts,fill,ln,0.55);
+      if(last){ const cov=coverOf(r), o=P(xa,y,0), u=[xb-xa,0], v=[AX.KX*h, lean*AX.SY+AX.KY*h];
+        if(cov) g+=`<image href="${esc(cov)}" width="1" height="1" preserveAspectRatio="none" transform="matrix(${u[0]} ${u[1]} ${(-v[0]).toFixed(2)} ${(-v[1]).toFixed(2)} ${(o[0]+v[0]).toFixed(1)} ${(o[1]+v[1]).toFixed(1)})"/>`;
+        g+=poly(pts,"none",ln,0.9); }
+      g+=`</g>`;
+    }
+    end(y1);
+    if(left) lip(); else riser();
+    /* the title sits outside the row: left row on the left, right row on the right */
+    const lp=A(left?LX0-8:RX1+8,y0+13,0), lab=b.label.length>18?b.label.slice(0,17)+"…":b.label;
+    g+=`<text x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" text-anchor="${left?"end":"start"}" class="blab" style="fill:${on?acc:txt}">${esc(lab)}</text>`;
+    g+=`<text x="${lp[0].toFixed(1)}" y="${(lp[1]+15).toFixed(1)}" text-anchor="${left?"end":"start"}" class="bnum" style="fill:${mut}">${n} record${n===1?"":"s"}</text>`;
+    s+=g+"</g>";
+  });
+  /* the store cat naps in the walkway; move the mouse over it */
+  const cx=LX1+WK/2, cy=34;
+  s+=`<g class="scene cat" data-anim="2600" transform="translate(${cx.toFixed(1)} ${cy})" aria-hidden="true">
+    <g class="cbody"><path class="tail" d="M10 4 q16 -2 14 -16 q-1 -6 -6 -6" fill="none" stroke="#3B3430" stroke-width="3.2" stroke-linecap="round"/>
+    <ellipse cx="0" cy="4" rx="14" ry="8" fill="#E9A15A" stroke="#3B3430" stroke-width="1.2"/>
+    <path d="M-6 0 q3 6 0 12 M0 -3 q3 7 0 14 M6 -2 q3 6 0 12" stroke="#C47A35" stroke-width="1.6" fill="none"/>
+    <g class="chead"><circle cx="-13" cy="-2" r="7" fill="#E9A15A" stroke="#3B3430" stroke-width="1.2"/>
+     <path d="M-19 -6 l1 -7 l5 4 Z M-11 -8 l4 -5 l2 7 Z" fill="#E9A15A" stroke="#3B3430" stroke-width="1" stroke-linejoin="round"/>
+     <g class="eyes"><path d="M-17 -2 q1.5 1.2 3 0 M-12 -2 q1.5 1.2 3 0" stroke="#3B3430" stroke-width="1.1" fill="none"/></g>
+     <circle cx="-13.5" cy="1" r=".9" fill="#3B3430"/></g></g>
+    <text class="zz" x="-6" y="-12">z</text><text class="zz z2" x="-2" y="-18">z</text></g>`;
+  const svg=$("#rb-bsvg"); svg.setAttribute("viewBox",`0 0 ${W} ${H}`); svg.setAttribute("height",H); svg.innerHTML=s;
+  const all=$("#rb-allbin"); if(all) all.classList.toggle("on",!state.bin&&state.view==="bin");
+}
+function bindBins(){
+  const sc=$("#rb-bscroll"); if(!sc) return;
+  sc.addEventListener("click",e=>{ const g=e.target.closest(".bin"); if(!g) return; openBin(g.dataset.k); });
+  sc.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ const g=e.target.closest(".bin"); if(g){ e.preventDefault(); openBin(g.dataset.k); } } });
+}
+function openBin(k){ state.bin=k; state.view="bin"; renderBins(); renderInBin(); }
+
+/* ---------- now playing ---------- */
+/* The turntable keeps one size whether or not a record is on. Heights lean the same way as the aisle. */
+function deckSVG(r){
+  const cov=r&&coverOf(r), hue=r?hueOf(r):0;
+  return `<svg viewBox="0 0 320 256" aria-hidden="true"><defs><clipPath id="rb-lc"><circle cx="140" cy="128" r="34"/></clipPath></defs>
+  <circle cx="140" cy="128" r="110" fill="#D9D7CF" stroke="#1B1D21" stroke-width="1.2"/>
+  <g class="spin${r?" on":""}" id="rb-spin">
+    ${Array.from({length:48},(_,k)=>{ const a=k/48*Math.PI*2; return `<circle cx="${(140+105*Math.cos(a)).toFixed(1)}" cy="${(128+105*Math.sin(a)).toFixed(1)}" r="1.5" fill="${k%2?"#1B1D21":"#8A877E"}"/>`; }).join("")}
+    <g class="disc${r?" in":""}">
+    <circle cx="140" cy="128" r="100" fill="#141414" stroke="#1B1D21" stroke-width="1.2"/>
+    ${[92,84,76,68,60,52,46].map(q=>`<circle cx="140" cy="128" r="${q}" fill="none" stroke="rgba(255,255,255,${q%8?".07":".13"})" stroke-width="1"/>`).join("")}
+    <circle cx="140" cy="128" r="34" fill="${r?`hsl(${hue} 62% 72%)`:"#D9D7CF"}"/>
+    ${cov?`<image href="${esc(cov)}" x="106" y="94" width="68" height="68" clip-path="url(#rb-lc)" preserveAspectRatio="xMidYMid slice"/>`:(r?`<path d="M106 128 A34 34 0 0 1 174 128 Z" fill="hsl(${(hue+180)%360} 55% 38%)"/>`:"")}
+    </g>
+    <circle cx="140" cy="128" r="3" fill="#fff"/>
+  </g>
+  ${r?`<path class="sheen" d="M78 70 A88 88 0 0 1 150 41" fill="none" stroke="rgba(255,255,255,.32)" stroke-width="5" stroke-linecap="round"/><path class="sheen" d="M206 190 A88 88 0 0 1 160 214" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="4" stroke-linecap="round"/>`:""}
+  <circle cx="262" cy="46" r="15" fill="#D9D7CF" stroke="#1B1D21" stroke-width="1.2"/><circle cx="262" cy="46" r="5" fill="#8A877E"/>
+  <g class="arm${r?" on":""}" id="rb-arm"><path d="M262 46 L270 150 L238 196" fill="none" stroke="#1B1D21" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><rect x="226" y="190" width="18" height="12" rx="2" fill="${cssv("--accent","#E0442E")}" stroke="#1B1D21" transform="rotate(34 235 196)"/></g>
+  ${[0,1].map(k=>`<g transform="translate(${250+k*34} 206)"><rect width="30" height="24" rx="3" fill="#F6EBC8" stroke="#1B1D21"/><path d="M5 17 A11 11 0 0 1 25 17" fill="none" stroke="#1B1D21" stroke-width=".8"/><path d="M21 9 l3 -3" stroke="#C8361F" stroke-width="1.4"/><line class="vu" id="rb-vu${k}" x1="15" y1="20" x2="15" y2="7" stroke="#1B1D21" stroke-width="1.2" stroke-linecap="round"/><circle cx="15" cy="20" r="1.8" fill="#1B1D21"/></g>`).join("")}
+  <text x="282" y="243" text-anchor="middle" style="font:800 7px sans-serif;letter-spacing:.12em;fill:#4D525B">L  ·  R</text>
+  </svg>`;
+}
+/* the platter spins up with some weight and slows to a stop; the meters swing while it plays */
+const DECK={ang:0,vel:0,raf:0,t:0,paused:false,lvl:[0,0],last:null};
+const RM=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+function deckTick(t){
+  const dt=Math.min(.05,(t-(DECK.t||t))/1000); DECK.t=t;
+  const r=state.now!=null&&!DECK.paused, target=r?198:0;
+  DECK.vel+=(target-DECK.vel)*Math.min(1,dt*(target?1.4:0.9));
+  DECK.ang=(DECK.ang+DECK.vel*dt)%360;
+  const sp=document.getElementById("rb-spin"); if(sp) sp.setAttribute("transform",`rotate(${DECK.ang.toFixed(2)} 140 128)`);
+  const playing=AUDIO.el&&!AUDIO.el.paused, sp01=DECK.vel/198;
+  for(let k=0;k<2;k++){
+    const want=playing?0.45+Math.random()*0.55:sp01*(0.12+0.06*Math.sin(t/300+k));
+    DECK.lvl[k]+=(want-DECK.lvl[k])*(want>DECK.lvl[k]?0.5:0.12);
+    const n=document.getElementById("rb-vu"+k); if(n) n.setAttribute("transform",`rotate(${(-48+DECK.lvl[k]*96).toFixed(1)} 15 20)`);
+  }
+  if(target||DECK.vel>0.5||playing) DECK.raf=requestAnimationFrame(deckTick); else { DECK.raf=0; DECK.t=0; }
+}
+function deckGo(){ if(RM) return; if(!DECK.raf){ DECK.t=0; DECK.raf=requestAnimationFrame(deckTick); } }
+function renderDeck(){
+  const box=$("#rb-np"); if(!box) return;
+  stopAudio();
+  const r=state.now!=null?RECS[state.now]:null, fresh=r&&DECK.last!==r.key;
+  DECK.last=r?r.key:null; if(fresh){ DECK.paused=false; if(!RM) DECK.vel=0; }
+  const d=r?SDB.details[r.key]||null:null, cov=r&&coverOf(r);
+  box.innerHTML=`<div class="nptitle">${r?`<div class="ar">${esc(r.artist)}</div><div class="al">${esc(r.title)}</div>`:`<div class="ar">Nothing playing</div><div class="al">Pick a record</div>`}</div>
+   <div class="npmeta" id="rb-meta">${r?metaHTML(r,d):`<span class="note">Year, genre, label and pressing show here.</span>`}</div>
+   <div class="npbody${fresh?" fresh":""}">
+    <div class="npcover"><div class="slv${r?"":" empty"}" id="rb-slv" ${r?`role="button" tabindex="0" aria-label="Turn the sleeve over"`:""}>
+      ${r?`<div class="vinyl" aria-hidden="true"></div><div class="flipper"><div class="face front">${sleeve(r)}</div>${backFace(r)}</div>`:`<div class="hole">Cover</div>`}</div></div>
+    <div class="npdeck"><div class="tt" title="${r?"Click the turntable to stop or start it":""}"><div class="axo"><div class="plinth"><i class="f fb"></i><i class="f ft"></i><i class="f fr"></i><i class="f fl"></i>${deckSVG(r)}</div></div></div>
+     <div class="money" id="rb-money">${r?moneyHTML(r,d):`<div class="cap">Prices for sale show here.</div>`}</div></div>
+    <div class="npright"><div class="tlist" id="rb-tl">${r?`<p class="note">Looking up the tracklist…</p>`:`<p class="note" style="padding:6px 4px">Click a record in the bin below, or press Pick for me or the gumball machine, and it goes on the turntable with its tracklist. Click a track to hear 30 seconds of it. Tick a box to add the track to your DJ playlist.</p>`}</div></div>
+   </div>`;
+  if(r){
+    hydrateCovers(box);
+    const slv=$("#rb-slv"); const turn=()=>slv.classList.toggle("over"); slv.onclick=turn; slv.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); turn(); } };
+    $(".np .tt").onclick=()=>{ DECK.paused=!DECK.paused; $("#rb-arm").classList.toggle("on",!DECK.paused); deckGo(); };
+    lookup(r).then(info=>{ if(state.now===r.i) showTracks(r,info); });
+    if(!d) details(r).then(dd=>{ if(state.now!==r.i||!dd) return; $("#rb-meta").innerHTML=metaHTML(r,dd); $("#rb-money").innerHTML=moneyHTML(r,dd); });
+    coverColors(r).then(()=>{ if(state.now===r.i&&state.vibe==="auto") applyVibe(); });
+  }
+  deckGo(); applyVibe();
+}
+function metaHTML(r,d){
+  const bits=[`<span class="yr">${r.year||"Year ?"}</span>`, esc(r.genre)];
+  if(d&&d.label) bits.push(esc(d.label));
+  let h=bits.join(" · ");
+  if(d&&d.press) h+=` <span class="press" title="${d.press==="OP"?"Original pressing":d.press==="RE"?"Reissue":"Repress"}">${esc(d.press)}</span>`;
+  const more=[d&&d.styles?esc(d.styles):"", r.coll?"Collection: "+esc(r.coll):"", r.from?"Source: "+esc(r.from):"", r.quality?esc(r.quality):""].filter(Boolean);
+  if(more.length) h+=`<span class="styles"> · ${more.join(" · ")}</span>`;
+  return h;
+}
+const GRADES=[["Poor (P)","P"],["Fair (F)","F"],["Good (G)","G"],["Good Plus (G+)","G+"],["Very Good (VG)","VG"],["Very Good Plus (VG+)","VG+"],["Near Mint (NM or M-)","NM"],["Mint (M)","M"]];
+/* The price wave: every copy for sale, cheapest on the left, dearest on the right.
+   eBay copies (when the sheet script has eBay keys) make the wave's shape, one bump per price.
+   Discogs adds its own count, its lowest listing and its suggested price for each condition, on the same price scale. */
+function waveSVG(r,d){
+  const ebay=d&&d.ebay&&d.ebay.p&&d.ebay.p.length>=2?d.ebay.p.map(Number).filter(x=>x>0).sort((a,b)=>a-b):null;
+  const sug=GRADES.map(([k,s])=>({s,v:d&&d.suggested&&d.suggested[k]!=null?+d.suggested[k]:null})).filter(p=>p.v>0);
+  const low=d&&+d.lowest>0?+d.lowest:null, dn=d?+d.forSale||0:0, paid=r&&r.cost?+r.cost:null;
+  if(!ebay&&!sug.length&&!low) return "";
+  const pool=[...(ebay||[]),...sug.map(p=>p.v),...(low?[low]:[]),...(paid?[paid]:[])];
+  let lo=Math.min(...pool), hi=Math.max(...pool), over=0;
+  if(ebay&&ebay.length>=8){ const p95=ebay[Math.floor(ebay.length*0.95)]; const cap=Math.max(p95,...sug.map(p=>p.v),paid||0); over=ebay.filter(x=>x>cap).length; hi=cap; }
+  if(hi-lo<1){ lo=Math.max(0,lo*0.6); hi=hi*1.4+0.5; }
+  const lo0=lo, hi0=hi, padv=(hi-lo)*0.05; lo=Math.max(0,lo-padv); hi=hi+padv;
+  const W=300,H=60,L=6,R=W-6,base=38,top=4,X=v=>L+(Math.min(v,hi)-lo)/(hi-lo)*(R-L);
+  const acc=cssv("--accent","#E0442E"), ink="#1B1D21", mut="#4D525B";
+  let shape="", n=0;
+  if(ebay){
+    n=ebay.length; const S=96, bw=(hi-lo)/22, ys=[];
+    for(let i=0;i<=S;i++){ const x=lo+(hi-lo)*i/S; let y=0; for(const v of ebay){ const z=(Math.min(v,hi)-x)/bw; y+=Math.exp(-z*z/2); } ys.push(y); }
+    /* height per copy is fixed so a busy record makes a taller wave than a rare one, until it fills the panel */
+    const peak=Math.max(...ys)||1, k=Math.min(7,(base-top)/peak);
+    let p=`M${L} ${base}`; ys.forEach((y,i)=>{ p+=` L${(L+(R-L)*i/S).toFixed(1)} ${(base-y*k).toFixed(1)}`; }); p+=` L${R} ${base} Z`;
+    shape=`<path d="${p}" fill="${acc}" fill-opacity=".22" stroke="${acc}" stroke-width="1.6" stroke-linejoin="round"/>`;
+  } else if(dn&&(sug.length||low)){
+    /* Discogs alone doesn't give each copy's price, so its copies show as one soft hill from its lowest listing to its top suggested price, as tall as the count */
+    const a=X(low||sug[0].v), b=X(Math.max(...sug.map(p=>p.v),low||0)), h=Math.min(base-top,6+Math.log2(1+dn)*6), m=(a+b)/2, w=Math.max(b-a,24);
+    const ha=Math.max(L,m-w/2-10), hb=Math.min(R,m+w/2+10);
+    shape=`<path d="M${ha} ${base} C${m-w/4} ${base} ${m-w/4} ${base-h} ${m} ${base-h} C${m+w/4} ${base-h} ${m+w/4} ${base} ${hb} ${base} Z" fill="${acc}" fill-opacity=".16" stroke="${acc}" stroke-width="1.4" stroke-dasharray="4 3"/>`;
+  }
+  let marks="", lastX=-99;
+  sug.sort((a,b)=>a.v-b.v).forEach(p=>{ const x=X(p.v), show=x-lastX>22; if(show) lastX=x;
+    marks+=`<line x1="${x}" x2="${x}" y1="${base}" y2="${base+5}" stroke="${ink}" stroke-width="1.2"/>`+(show?`<text x="${x}" y="${base+15}" text-anchor="middle" style="font:700 10px sans-serif;fill:${mut}">${p.s}</text>`:"")+`<title>Discogs suggests ${money(p.v)} for ${p.s}</title>`; });
+  if(low) marks+=`<circle cx="${X(low)}" cy="${base}" r="3.4" fill="#fff" stroke="${ink}" stroke-width="1.5"><title>Lowest Discogs listing ${money(low)}</title></circle>`;
+  if(paid) marks+=`<path d="M${X(paid)-4} ${top-1} L${X(paid)+4} ${top-1} L${X(paid)} ${top+5} Z" fill="${ink}"><title>You paid ${money(paid)}</title></path><line x1="${X(paid)}" x2="${X(paid)}" y1="${top+5}" y2="${base}" stroke="${ink}" stroke-width="1" stroke-dasharray="2 3"/>`;
+  const fmt=v=>money(v<10?Math.round(v*2)/2:Math.round(v));
+  const axis=`<line x1="${L}" x2="${R}" y1="${base}" y2="${base}" stroke="${ink}" stroke-width="1"/>
+   <text x="${X(lo0)}" y="${H-3}" style="font:700 11px sans-serif;fill:${ink}">${fmt(lo0)}</text>
+   <text x="${X(hi0)}" y="${H-3}" text-anchor="end" style="font:700 11px sans-serif;fill:${ink}">${fmt(hi0)}${over?"+":""}</text>`;
+  const label=(ebay?`${n} copies for sale on eBay, ${fmt(ebay[0])} to ${fmt(ebay[n-1])}. `:"")+(dn?`${dn} for sale on Discogs${low?`, from ${money(low)}`:""}.`:"");
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)}"><title>${esc(label)} Shaded: copies for sale by price. Dot: lowest listing. Ticks: condition prices. Triangle: what you paid.</title>${shape}${axis}${marks}</svg>`;
+}
+function moneyHTML(r,d){
+  const vt=valueText(r), disc=d&&d.discogs?`https://www.discogs.com/release/${encodeURIComponent(d.discogs)}`:`https://www.discogs.com/search/?q=${encodeURIComponent(r.artist+" "+r.title)}&type=all`;
+  const ebay=`https://www.ebay.com/sch/176985/i.html?_nkw=${encodeURIComponent((VARIOUS.test(r.artist)?"":r.artist+" ")+r.title+" vinyl")}`;
+  const wave=d?waveSVG(r,d):"", eb=d&&d.ebay&&d.ebay.n>=2?d.ebay:null;
+  const bits=[];
+  if(eb) bits.push(`<b>${eb.n}</b> on <a class="lk" href="${ebay}" target="_blank" rel="noopener">eBay</a>`);
+  if(d&&(d.forSale||d.lowest)) bits.push(`<b>${d.forSale||0}</b> on <a class="lk" href="${disc}" target="_blank" rel="noopener">Discogs</a>${d.lowest?` from <b>${money(d.lowest)}</b>`:""}`);
+  else bits.push(`<a class="lk" href="${disc}" target="_blank" rel="noopener">Discogs</a>`);
+  return `<div class="facts"><b>Value ${vt||"not set"}</b>${vt&&r.vsrc?`<span class="vsrc">${esc(r.vsrc)}</span>`:""}</div>
+   <div class="wave">${wave||`<div class="cap">${d?"No prices for this pressing yet.":(LIVE?"Checking prices…":"Prices show on the live page.")}</div>`}</div>
+   <div class="cap forsale">For sale: ${bits.join(" · ")}</div>`;
+}
+let DJ=ls("rb-dj")||[];
+function saveDJ(){ ls("rb-dj",DJ); const n=$("#rb-djn"); if(n) n.textContent=DJ.length?` (${DJ.length})`:""; }
+function djKey(r,s,t){ return r.key+"|"+s+"|"+t.n+"|"+t.t; }
+function showTracks(r,info){
+  const tl=$("#rb-tl"); if(!tl) return;
+  if(!info||!info.sides||!info.sides.length){ tl.innerHTML=`<p class="note">No tracklist found for this pressing yet.</p>`; return; }
+  const all=[].concat(...info.sides.map(s=>s.tracks)), tot=all.reduce((a,t)=>a+(t.len||0),0), d=SDB.details[r.key];
+  const total=tot?fmtLen(tot):(d&&d.runtime)||"";
+  const gq=t=>`https://genius.com/search?q=${encodeURIComponent((VARIOUS.test(r.artist)?"":r.artist+" ")+t)}`;
+  tl.innerHTML=`<table class="tr"><thead><tr><th></th><th>Track</th><th>Lyrics</th><th class="tm">${total?`<b>${total}</b>`:""}Time</th><th class="dj">add to DJ playlist</th></tr></thead><tbody>
+   ${info.sides.map((s,si)=>`${info.sides.length>1||s.name!=="Tracks"?`<tr class="sidehead"><td colspan="5">${esc(s.name)}</td></tr>`:""}${s.tracks.map((t,ti)=>{ const on=DJ.some(x=>x.k===djKey(r,s.name,t));
+     return `<tr><td class="n">${esc(t.n)}</td><td><button class="play" data-s="${si}" data-t="${ti}" title="Play 30 seconds"><i>▶</i>${esc(t.t)}</button></td><td class="ly"><a href="${gq(t.t)}" target="_blank" rel="noopener" aria-label="Lyrics for ${esc(t.t)} on Genius">Lyrics</a></td><td class="tm">${t.len?fmtLen(t.len):""}</td><td class="dj"><button class="djb${on?" on":""}" data-s="${si}" data-t="${ti}" aria-pressed="${on}" aria-label="${on?"Remove from":"Add to"} DJ playlist: ${esc(t.t)}">✓</button></td></tr>`; }).join("")}`).join("")}
+  </tbody></table>`;
+  tl.querySelectorAll(".djb").forEach(b=>b.onclick=()=>{ const s=info.sides[+b.dataset.s], t=s.tracks[+b.dataset.t], k=djKey(r,s.name,t), at=DJ.findIndex(x=>x.k===k);
+    if(at>=0) DJ.splice(at,1); else DJ.push({k,artist:r.artist,album:r.title,i:r.i,side:s.name,n:t.n,t:t.t,len:t.len||0});
+    saveDJ(); const on=at<0; b.classList.toggle("on",on); b.setAttribute("aria-pressed",on); });
+  previews(r).then(list=>{ if(state.now!==r.i) return;
+    tl.querySelectorAll(".play").forEach(b=>{ const t=info.sides[+b.dataset.s].tracks[+b.dataset.t], url=previewFor(list,t.t);
+      if(url){ b.classList.add("has"); b.onclick=()=>playPreview(b,url); } else { b.title="No sample for this track"; b.onclick=null; } }); });
+}
+function play(i){
+  state.now=i; renderDeck();
+  $$(".card.rec.on,.crec.on").forEach(e=>e.classList.remove("on"));
+  $$(`.card.rec[data-i="${i}"],.crec[data-i="${i}"]`).forEach(e=>e.classList.add("on"));
+  CRATES.forEach(c=>c.paint&&c.paint());
+}
+
+/* ---------- in the bin: crates across the width; scroll up to dig through each one ---------- */
+function inBinList(){
+  if(state.view==="flight") return state.flight.map(i=>RECS[i]).filter(Boolean);
+  const q=state.q.trim().toLowerCase(), f=BINBY[state.by].of;
+  const base=state.view==="pool"?pickPool():RECS.filter(r=>!state.bin||f(r)===state.bin);
+  return base.filter(r=>!q||(r.artist+" "+r.title).toLowerCase().includes(q))
+    .sort((a,b)=>sortName(a).localeCompare(sortName(b))||(a.year||9999)-(b.year||9999));
+}
+function inBinLabel(n){
+  const q=state.q.trim();
+  let sel, where;
+  if(state.view==="flight"){ sel=`A flight of ${n}`; where="the flight"; }
+  else if(state.view==="pool"){ sel=[state.mood||"Any mood",state.eras.size?[...state.eras].sort().join(", "):"any era"].join(" · "); where="the library"; }
+  else { sel=state.bin||"All records"; where=state.bin?`the ${state.bin} bin`:"all bins"; }
+  if(q&&state.view!=="flight") sel+=` · “${q}”`;
+  return {sel, right:`<b>${n}</b> record${n===1?"":"s"} in ${esc(where)}`};
+}
+const CRATES=[];
+function crateCount(W,n){ return Math.max(1,Math.min(4,Math.floor(W/290),Math.ceil(n/6))); }
+function renderInBin(){
+  const host=$("#rb-cols"); if(!host) return;
+  const list=inBinList(), lab=inBinLabel(list.length);
+  $("#rb-insel").textContent=lab.sel; $("#rb-inright").innerHTML=lab.right;
+  CRATES.length=0;
+  if(!list.length){ host.innerHTML=`<div class="note" style="padding:20px">Nothing here. Try another bin or clear the search.</div>`; return; }
+  const W=host.clientWidth||900;
+  const n=state.view==="flight"?Math.max(1,Math.min(4,Math.ceil(list.length/2))):crateCount(W,list.length);
+  const per=Math.ceil(list.length/n), parts=[];
+  for(let k=0;k<n;k++){ const p=list.slice(k*per,(k+1)*per); if(p.length) parts.push(p); }
+  host.innerHTML=parts.map((p,k)=>{ const a=letterOf(p[0]), z=letterOf(p[p.length-1]);
+    return `<div class="col" data-c="${k}"><div class="collab"><span>${a===z?a:a+" to "+z} <small>${p.length}</small></span><span class="cur" aria-label="Current letter">${a}</span></div><div class="crate" tabindex="0" aria-label="Crate ${a} to ${z}. Scroll up to dig through it. Point at a record to pull it up, click to play it."><div class="stage"></div><div class="spacer"></div></div></div>`; }).join("");
+  $$("#rb-cols .col").forEach((col,k)=>CRATES.push(makeCrate(col,parts[k])));
+}
+/* One crate: the front record sits low behind the crate's front panel, the rest stand behind it in a slight axonometric
+   so you see the stack. Point at a record and it rises as if pulled out of the bin; click and it stays up and plays.
+   Scrolling up flips the front records forward to dig deeper. */
+function makeCrate(col,recs){
+  const items=[]; let last="";
+  recs.forEach(r=>{ const L=letterOf(r); if(L!==last&&state.view!=="flight"){ items.push({div:L}); last=L; } items.push({r}); });
+  const sc=col.querySelector(".crate"), stage=col.querySelector(".stage"), spacer=col.querySelector(".spacer"), cur=col.querySelector(".cur");
+  const C={items,sc,stage,nodes:new Map(),pos:0,S:120,STEP:60,hover:-1};
+  const DEEP=10;
+  function size(){
+    const H=sc.clientHeight||300, Wd=sc.clientWidth||260;
+    C.S=Math.round(Math.max(70,Math.min(Wd*0.64,H/1.9))); C.STEP=Math.max(36,C.S*0.42); C.H=H; C.W=Wd;
+    C.dx=C.S*0.045; C.dy=C.S*0.075; C.by=H-8; C.lip=Math.round(C.S*0.34);
+    C.x0=Math.round(Wd/2-C.S/2-C.dx*DEEP*0.45);
+    stage.style.height=H+"px"; spacer.style.height=Math.round((items.length-1)*C.STEP)+"px";
+    stage.style.perspective=(C.S*6)+"px"; stage.style.perspectiveOrigin=`50% ${C.by-C.S}px`;
+    drawBox();
+  }
+  function drawBox(){
+    const S=C.S, K=DEEP+1, x0=C.x0-6, x1=C.x0+S+6, by=C.by, lh=C.lip, bx=K*C.dx, byy=K*C.dy;
+    const back=`<svg class="cbox back" width="${C.W}" height="${C.H}" aria-hidden="true">
+      <polygon points="${x0},${by} ${x0+bx},${by-byy} ${x1+bx},${by-byy} ${x1},${by}" fill="#E8DCC6" stroke="#2A2622" stroke-width="1.2"/>
+      <polygon points="${x0},${by-lh} ${x0+bx},${by-byy-lh} ${x0+bx},${by-byy} ${x0},${by}" fill="var(--crate2,#B23A2B)" stroke="#2A2622" stroke-width="1.2"/>
+      <polygon points="${x0+bx},${by-byy-lh} ${x1+bx},${by-byy-lh} ${x1+bx},${by-byy} ${x0+bx},${by-byy}" fill="var(--crate2,#B23A2B)" stroke="#2A2622" stroke-width="1.2"/>
+      <polygon points="${x1},${by-lh} ${x1+bx},${by-byy-lh} ${x1+bx},${by-byy} ${x1},${by}" fill="var(--crate,#D9483A)" stroke="#2A2622" stroke-width="1.2"/>
+    </svg>`;
+    const holes=[]; const cols=Math.max(3,Math.round(S/34)); for(let k=0;k<cols;k++){ const w=(x1-x0-16)/cols; holes.push(`<rect x="${(x0+8+k*w+3).toFixed(1)}" y="${(by-lh+lh*0.42).toFixed(1)}" width="${(w-6).toFixed(1)}" height="${(lh*0.36).toFixed(1)}" rx="3" fill="rgba(0,0,0,.25)"/>`); }
+    const front=`<svg class="cbox front" width="${C.W}" height="${C.H}" aria-hidden="true">
+      <rect x="${x0}" y="${by-lh}" width="${x1-x0}" height="${lh}" rx="3" fill="var(--crate,#D9483A)" stroke="#2A2622" stroke-width="1.4"/>
+      <rect x="${((x0+x1)/2-S*0.16).toFixed(1)}" y="${by-lh+5}" width="${(S*0.32).toFixed(1)}" height="${Math.max(8,lh*0.22).toFixed(1)}" rx="${Math.max(4,lh*0.11).toFixed(1)}" fill="rgba(0,0,0,.35)"/>
+      ${holes.join("")}</svg>`;
+    stage.querySelectorAll(".cbox").forEach(e=>e.parentNode.removeChild(e));
+    stage.insertAdjacentHTML("afterbegin",back); stage.insertAdjacentHTML("beforeend",front);
+  }
+  function node(j){
+    let el=C.nodes.get(j); if(el) return el;
+    const it=items[j]; el=document.createElement("div");
+    if(it.div){ el.className="card div"; el.innerHTML=`<div class="face front"><div class="big">${it.div}</div></div><div class="tab">${it.div}</div><div class="face back" style="--bk:#E9E3D6"></div>`; }
+    else { const r=it.r; el.className="card rec"+(state.now===r.i?" on":""); el.dataset.i=r.i; el.setAttribute("role","button"); el.setAttribute("aria-label",r.artist+", "+r.title);
+      el.innerHTML=`<div class="face front">${sleeve(r)}</div>`; }
+    el.dataset.j=j; stage.insertBefore(el,stage.querySelector(".cbox.front")); C.nodes.set(j,el);
+    if(!it.div) hydrateCovers(el);
+    return el;
+  }
+  function paint(){
+    const max=Math.max(0,sc.scrollHeight-sc.clientHeight);
+    C.pos=Math.max(0,Math.min(items.length-1,(max-sc.scrollTop)/C.STEP));
+    const lo=Math.max(0,Math.floor(C.pos)-2), hi=Math.min(items.length-1,Math.floor(C.pos)+DEEP+1), keep=new Set();
+    const S=C.S;
+    for(let j=lo;j<=hi;j++){
+      const d=j-C.pos; if(d<-2.2) continue; keep.add(j);
+      const el=node(j), it=items[j];
+      el.style.width=S+"px"; el.style.height=S+"px";
+      let tx=C.x0, ty=C.by-S, rot=0, z=1000-j, op=1, lift=0;
+      if(d>=0){ tx+=d*C.dx; ty-=d*C.dy; if(d>DEEP-1) op=Math.max(0,DEEP-d);
+        const on=it.r&&state.now===it.r.i;
+        if(on) lift=S*0.6; else if(C.hover===j) lift=S*0.4; }
+      else { rot=-105*Math.min(1,-d); z=2000+j; op=d<-1.5?Math.max(0,(d+2.2)/0.7):1; }
+      el.classList.toggle("up",lift>0);
+      el.style.zIndex=z; el.style.opacity=op;
+      el.style.transform=`translate(${tx.toFixed(1)}px,${(ty-lift).toFixed(1)}px) rotateX(${rot.toFixed(1)}deg)`;
+      if(rot<-80&&it.r&&!el.querySelector(".back")) el.insertAdjacentHTML("beforeend",backFace(it.r));
+    }
+    C.nodes.forEach((el,j)=>{ if(!keep.has(j)){ el.parentNode&&el.parentNode.removeChild(el); C.nodes.delete(j); } });
+    let L="#"; for(let j=Math.round(C.pos);j>=0;j--){ if(items[j].div){ L=items[j].div; break; } if(items[j].r){ L=letterOf(items[j].r); break; } }
+    cur.textContent=L;
+  }
+  C.paint=paint;
+  size(); sc.scrollTop=sc.scrollHeight;
+  let raf=0, snapT=0, snapping=false;
+  sc.addEventListener("scroll",()=>{ if(!raf) raf=requestAnimationFrame(()=>{ raf=0; paint(); });
+    clearTimeout(snapT); if(snapping){ snapping=false; return; }
+    snapT=setTimeout(()=>{ const k=Math.round(C.pos); if(Math.abs(k-C.pos)>0.02){ snapping=true; C.goTo(k); } },180); },{passive:true});
+  C.goTo=j=>{ const max=Math.max(0,sc.scrollHeight-sc.clientHeight); sc.scrollTop=max-j*C.STEP; };
+  if(window.ResizeObserver){ let lastH=0,lastW=0; new ResizeObserver(()=>{ const h=sc.clientHeight, w=sc.clientWidth; if(!h||(h===lastH&&w===lastW)) return; const keepPos=C.pos; lastH=h; lastW=w; size(); C.goTo(Math.round(keepPos)); paint(); }).observe(sc); }
+  paint();
+  /* pull a record up when the mouse is over it */
+  stage.addEventListener("mouseover",e=>{ const el=e.target.closest(".card.rec"); const j=el?+el.dataset.j:-1; if(j===C.hover) return; if(el&&j<C.pos-0.3) return; C.hover=j; paint(); });
+  stage.addEventListener("mouseleave",()=>{ if(C.hover<0) return; C.hover=-1; paint(); });
+  stage.addEventListener("click",e=>{ const el=e.target.closest(".card"); if(!el) return; const j=+el.dataset.j;
+    if(j<C.pos-0.3){ C.goTo(j); return; }
+    if(el.classList.contains("rec")) play(+el.dataset.i); });
+  stage.addEventListener("keydown",e=>{ if(e.key==="Enter"){ const el=e.target.closest(".card.rec"); if(el) play(+el.dataset.i); } });
+  sc.addEventListener("keydown",e=>{ if(e.key==="ArrowUp"||e.key==="ArrowDown"){ e.preventDefault(); C.goTo(Math.round(C.pos)+(e.key==="ArrowUp"?1:-1)); }
+    if(e.key==="Enter"){ const it=items[Math.round(C.pos)]; if(it&&it.r) play(it.r.i); } });
+  C.resize=()=>{ const k=Math.round(C.pos); size(); C.goTo(k); paint(); };
+  return C;
+}
+
+/* ---------- pick for me ---------- */
+function decade(r){ return r.year?Math.floor(r.year/10)*10+"s":null; }
+function eras(){ return [...new Set(RECS.map(decade).filter(Boolean))].sort(); }
+function pickPool(){ return RECS.filter(r=>(!state.mood||MOODS[state.mood].includes(r.genre))&&(!state.eras.size||state.eras.has(decade(r)))); }
+function renderPop(){
+  const p=$("#rb-pop"); p.hidden=!state.pop; $("#rb-pickbtn").classList.toggle("on",state.pop); if(!state.pop) return;
+  const moodPool=RECS.filter(r=>!state.mood||MOODS[state.mood].includes(r.genre));
+  const es=eras(), cnt=e=>moodPool.filter(r=>decade(r)===e).length, mx=Math.max(1,...es.map(cnt));
+  const pool=pickPool();
+  p.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center"><h3>Pick for me</h3><button class="btn sm" id="rb-popx">Close</button></div>
+   <div class="lab">Mood</div><div class="chips">${["Anything"].concat(Object.keys(MOODS)).map(m=>`<button class="btn sm${(m==="Anything"?!state.mood:state.mood===m)?" on":""}" data-mood="${m==="Anything"?"":esc(m)}">${esc(m)}</button>`).join("")}</div>
+   <div class="lab">Era <span style="text-transform:none;letter-spacing:0;font-weight:400">(click one or more)</span></div>
+   <div class="eras">${es.map(e=>`<button class="era${state.eras.has(e)?" on":""}" data-era="${e}" aria-pressed="${state.eras.has(e)}" aria-label="${e}, ${cnt(e)} records"><span class="c">${cnt(e)}</span><span class="bar" style="height:${Math.max(3,Math.round(cnt(e)/mx*70))}px"></span><span class="y">${e.slice(2)}</span></button>`).join("")}</div>
+   <div class="optbar">
+    <button class="btn go" id="rb-pickgo">Pick a record <small>${pool.length} fit</small></button>
+    <button class="btn" id="rb-flight">Pick a flight <small>2 per bin</small></button>
+    <button class="btn" id="rb-showall">Show all in Library <small>${pool.length}</small></button>
+   </div>`;
+  p.querySelectorAll("[data-mood]").forEach(b=>b.onclick=()=>{ state.mood=b.dataset.mood; renderPop(); if(state.view==="pool") renderInBin(); });
+  p.querySelectorAll("[data-era]").forEach(b=>b.onclick=()=>{ const e=b.dataset.era; state.eras.has(e)?state.eras.delete(e):state.eras.add(e); renderPop(); if(state.view==="pool") renderInBin(); });
+  $("#rb-popx").onclick=()=>{ state.pop=false; renderPop(); };
+  const toDig=()=>{ if(state.mode!=="dig"){ state.mode="dig"; renderAll(); } };
+  $("#rb-pickgo").onclick=()=>{ const pl=pickPool(); if(!pl.length) return; let n; do{ n=pl[Math.floor(Math.random()*pl.length)].i }while(pl.length>1&&n===state.now); toDig(); play(n); };
+  $("#rb-flight").onclick=()=>{ const pl=pickPool().slice(); if(!pl.length) return; toDig();
+    const host=$("#rb-cols"), bins=crateCount(host&&host.clientWidth||900,99);
+    for(let k=pl.length-1;k>0;k--){ const j=Math.floor(Math.random()*(k+1)); [pl[k],pl[j]]=[pl[j],pl[k]]; }
+    state.flight=pl.slice(0,bins*2).map(r=>r.i); state.view="flight"; renderBins(); renderInBin(); play(state.flight[0]); };
+  $("#rb-showall").onclick=()=>{ toDig(); state.view="pool"; renderBins(); renderInBin(); };
+}
+
+/* ---------- DJ playlists: the checkout desk and the long wall ---------- */
+const WALLBY={artist:"Artist",genre:"Genre",year:"Year",value:"Value"};
+const POSTER_COLORS=[["#C8361F","#FFF8EC"],["#2E5E8C","#FFD84D"],["#FFD84D","#2A2200"],["#3A8F5C","#FFF8EC"],["#7B3FA0","#FFE8F6"],["#F2A07B","#14213F"],["#141414","#F4F1E8"],["#E8D9B5","#3A2A1C"]];
+function recByKey(k){ return RECS.find(r=>r.key===k); }
+function listItems(){
+  if(state.list==="draft") return DJ;
+  if(state.list.startsWith("L")){ const l=SDB.lists[+state.list.slice(1)]; return l?l.items:[]; }
+  return null;
+}
+function listName(){ if(state.list==="draft") return ls("rb-djname")||"Your playlist"; if(state.list.startsWith("L")){ const l=SDB.lists[+state.list.slice(1)]; return l?l.name:""; } return "All records"; }
+function wallList(){
+  const items=listItems(); let recs;
+  if(items){ const seen=new Set(); recs=[]; items.forEach(x=>{ const k=norm(x.artist)+"|"+norm(x.album); if(seen.has(k)) return; seen.add(k); const r=recByKey(k); if(r) recs.push(r); }); }
+  else { const q=state.q.trim().toLowerCase(); recs=RECS.filter(r=>!q||(r.artist+" "+r.title).toLowerCase().includes(q)); }
+  const by=state.wallBy, an=(a,b)=>sortName(a).localeCompare(sortName(b))||(a.year||9999)-(b.year||9999);
+  const cmp={artist:an,genre:(a,b)=>(a.genre||"").localeCompare(b.genre||"")||an(a,b),year:(a,b)=>(a.year||9999)-(b.year||9999)||an(a,b),value:(a,b)=>(valueOf(b)||0)-(valueOf(a)||0)||an(a,b)}[by];
+  return recs.sort(cmp);
+}
+function posterHTML(l,idx){
+  const h=hash(l.name+"|"+l.by), [bg,ink]=POSTER_COLORS[h%POSTER_COLORS.length], pats=Object.keys(PATTERNS), pat=PATTERNS[pats[(h>>>4)%pats.length]](ink);
+  const sticker=h%3===0, id="L"+idx, n=l.items.length;
+  return `<button class="poster${sticker?" sticker":""}${state.list===id?" on":""}" data-list="${id}" style="--pbg:${bg};--pink:${ink};--ppat:${pat};--r:${((h>>>8)%7)-3}deg" aria-pressed="${state.list===id}"><b>${esc(l.name)}</b><small>${n} track${n===1?"":"s"}</small></button>`;
+}
+function boardHTML(){
+  const items=listItems(); if(!items) return "";
+  const draft=state.list==="draft", tot=items.reduce((a,x)=>a+(typeof x.len==="number"?x.len:lenMs(x.len)),0);
+  return `<div class="board on"><div class="bt"><span>${esc(listName())}</span><span>${items.length} TRK${tot?" · "+fmtLen(tot):""}</span></div>
+   <ol>${items.length?items.map((x,k)=>`<li style="--k:${Math.min(k,24)}"><i>${String(k+1).padStart(2,"0")}</i>${esc(x.t)} – ${esc(x.artist)}${draft?` <button data-rm="${k}" aria-label="Remove ${esc(x.t)}" style="margin-left:auto;color:#FFD84D">✕</button>`:""}</li>`).join(""):`<li>TICK TRACKS IN NOW PLAYING</li>`}</ol>
+   ${draft?`<div class="tools"><input id="dj-name" placeholder="Name this playlist" value="${esc(ls("rb-djname")||"")}" aria-label="Playlist name"><button class="btn sm go" id="dj-save">Save playlist</button><button class="btn sm" id="dj-copy">Copy</button><button class="btn sm" id="dj-clear">Clear</button></div><div class="note" id="dj-msg" style="color:#ddd;text-transform:none;letter-spacing:0;margin-top:6px"></div>`:""}</div>`;
+}
+const DESKART=`<svg viewBox="0 0 400 96" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
+ <rect x="0" y="62" width="400" height="34" fill="#8E5E33"/><path d="M0 62h400" stroke="#5E3D20" stroke-width="2"/>
+ <g class="scene phone" data-anim="1500" transform="translate(36,10)"><g class="ring"><path d="M-6 6 q-6 8 0 16 M-12 2 q-8 12 0 24 M112 6 q6 8 0 16 M118 2 q8 12 0 24" fill="none" stroke="#C8361F" stroke-width="2" stroke-linecap="round"/></g><g class="base"><path d="M6 52 Q2 26 34 24 L70 24 Q102 26 98 52 Z" fill="#C8361F" stroke="#3A2A1C" stroke-width="1.5"/></g><path class="hs" d="M0 14 Q2 2 20 4 L84 4 Q102 2 104 14 L100 22 Q86 16 52 16 Q18 16 4 22 Z" fill="#C8361F" stroke="#3A2A1C" stroke-width="1.5"/><g><circle cx="52" cy="40" r="11" fill="#F5E9C8" stroke="#3A2A1C"/><circle cx="52" cy="40" r="3" fill="#3A2A1C"/>${[0,1,2,3,4,5,6,7].map(k=>`<circle cx="${52+8*Math.cos(k*0.75)}" cy="${40+8*Math.sin(k*0.75)}" r="1.6" fill="#3A2A1C"/>`).join("")}<path d="M100 40 q30 6 40 22" fill="none" stroke="#3A2A1C" stroke-width="2"/></g></g>
+ <g class="scene ash" data-anim="2600" transform="translate(250,40)"><ellipse cx="30" cy="20" rx="30" ry="9" fill="#9AA0A6" stroke="#3A2A1C"/><ellipse cx="30" cy="17" rx="19" ry="5" fill="#5C6166"/><rect x="34" y="8" width="26" height="4" rx="2" fill="#EEE" stroke="#3A2A1C" stroke-width=".8" transform="rotate(-14 34 10)"/><path class="smoke s1" d="M58 4 q4-8 0-14 q-4-6 2-12" fill="none" stroke="#B9BDC2" stroke-width="1.5" opacity=".7"/><path class="smoke s2" d="M58 4 q-4-8 0-14 q4-6 -2-12" fill="none" stroke="#B9BDC2" stroke-width="1.5" opacity="0"/></g>
+ <g class="scene sign" data-anim="1800" transform="translate(330,18)"><g class="swing"><path d="M28 -14 L10 0 M28 -14 L46 0" stroke="#3A2A1C" stroke-width="1"/><circle cx="28" cy="-14" r="2" fill="#3A2A1C"/><rect width="56" height="44" rx="3" fill="#F5E9C8" stroke="#3A2A1C"/><text x="28" y="18" text-anchor="middle" style="font:800 10px sans-serif;fill:#3A2A1C">NO</text><text x="28" y="32" text-anchor="middle" style="font:800 9px sans-serif;fill:#C8361F">REFUNDS</text></g></g>
+</svg>`;
+function renderDJMode(){
+  const djs=[...new Set(SDB.lists.map(l=>l.by))];
+  const groups=new Map(); SDB.lists.forEach((l,i)=>{ if(state.djBy&&l.by!==state.djBy) return; if(!groups.has(l.by)) groups.set(l.by,[]); groups.get(l.by).push([l,i]); });
+  $("#rb-main").innerHTML=`<div class="djmode">
+   <div class="panel desk"><div class="pbar"><span class="ptitle">Checkout desk</span></div>
+    <div class="deskscroll">
+     <div class="grp"><span class="glab">Sort wall by</span><div class="seg">${Object.keys(WALLBY).map(k=>`<button class="btn${state.wallBy===k?" on":""}" data-wallby="${k}">${WALLBY[k]}</button>`).join("")}</div></div>
+     <div class="posters">
+      <button class="poster${state.list==="all"?" on":""}" data-list="all" style="--pbg:#FFFFFF;--pink:#16181C;--ppat:none;--r:-1deg"><b>All records</b><small>${RECS.length} in the library</small></button>
+      <button class="poster sticker${state.list==="draft"?" on":""}" data-list="draft" style="--pbg:#FFD84D;--pink:#2A2200;--ppat:none;--r:3deg"><b>Your playlist</b><small id="rb-djn2">${DJ.length} track${DJ.length===1?"":"s"}</small></button>
+     </div>
+     ${boardHTML()}
+     <div class="lab">Saved playlists</div>
+     ${djs.length?`<div class="djs"><button class="btn sm${!state.djBy?" on":""}" data-djby="">All DJs</button>${djs.map(n=>`<button class="btn sm${state.djBy===n?" on":""}" data-djby="${esc(n)}">${esc(n)}</button>`).join("")}</div>
+      ${[...groups].map(([by,ls_])=>`<div class="lab" style="text-transform:none;letter-spacing:0;font-size:13px;color:var(--ink)">${esc(by)}</div><div class="posters">${ls_.map(([l,i])=>posterHTML(l,i)).join("")}</div>`).join("")}`
+      :`<div class="note">No saved playlists yet. Tick tracks in Now playing, then name and save Your playlist here.</div>`}
+    </div><div class="deskart">${DESKART}</div></div>
+   <div class="panel wall"><div class="pbar wallbar"><span class="ptitle">The wall</span><span class="sel" id="rb-wallsel">${esc(listName())}</span><div class="prog" aria-hidden="true"><i id="rb-prog"></i></div><span class="right" id="rb-wallcount"></span></div>
+    <div class="wscroll" id="rb-wscroll" tabindex="0" aria-label="The wall. Scroll up and down to move along it."><div class="wstage" id="rb-wstage"><div class="wtrack" id="rb-wtrack"></div></div><div id="rb-wspace"></div></div></div>
+  </div>`;
+  $$("[data-wallby]").forEach(b=>b.onclick=()=>{ state.wallBy=b.dataset.wallby; renderDJMode(); });
+  $$("[data-list]").forEach(b=>b.onclick=()=>{ state.list=b.dataset.list; renderDJMode(); });
+  $$("[data-djby]").forEach(b=>b.onclick=()=>{ state.djBy=b.dataset.djby; renderDJMode(); });
+  bindBoard(); buildWall();
+}
+function bindBoard(){
+  $$(".board [data-rm]").forEach(b=>b.onclick=()=>{ DJ.splice(+b.dataset.rm,1); saveDJ(); renderDJMode(); });
+  const nm=$("#dj-name"); if(!nm) return;
+  const m=t=>{ const e=$("#dj-msg"); if(e) e.textContent=t; };
+  nm.oninput=e=>ls("rb-djname",e.target.value);
+  $("#dj-copy").onclick=()=>{ const txt=(val("dj-name")?val("dj-name")+"\n":"")+DJ.map((x,k)=>`${k+1}. ${x.t} - ${x.artist} (${x.album}, ${x.side} ${x.n})`).join("\n");
+    (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(()=>m("Copied the playlist.")).catch(()=>m(txt)); };
+  const cl=$("#dj-clear"); cl.onclick=()=>{ if(cl.dataset.sure){ DJ=[]; saveDJ(); renderDJMode(); } else { cl.dataset.sure="1"; cl.textContent="Tap again to clear"; } };
+  $("#dj-save").onclick=async()=>{
+    const name=val("dj-name"); if(!name){ m("Give the playlist a name first."); nm.focus(); return; } if(!DJ.length){ m("Tick some tracks in Now playing first."); return; }
+    const by=AUTH.name||(AUTH.role==="admin"?"Dedub":"Guest"), items=DJ.map(x=>({artist:x.artist,album:x.album,side:x.side,n:x.n,t:x.t,len:x.len?fmtLen(x.len):""}));
+    m("Saving…");
+    try{ const d=await api("dj",{name,by,items});
+      if(d&&d.ok){ const at=SDB.lists.findIndex(l=>l.name===name&&l.by===by), entry={name,by,role:AUTH.role,items};
+        if(at>=0) SDB.lists[at]=entry; else SDB.lists.push(entry);
+        const c=readCache(); if(c){ c.lists=SDB.lists; saveCache(c); }
+        state.list="L"+(at>=0?at:SDB.lists.length-1); renderDJMode(); status(`Saved “${name}”. Everyone signed in can see it now.`); }
+      else m(d&&d.error||"The sheet said no."); }
+    catch(e){ m("Couldn't reach the sheet. Try again in a minute."); }
+  };
+}
+
+/* the wall: records left to right on shelves, moved by scrolling up and down */
+const WALL={list:[],nodes:new Map(),props:[],tags:[]};
+const PROPS=["gumball","sticker","cassettes","cds","sale","poster"];
+function propSVG(kind,S,h){
+  const w=Math.round(S*0.62);
+  if(kind==="gumball") return {w,h:Math.round(S*0.9),svg:`<svg viewBox="0 0 60 90" width="${w}" height="${Math.round(S*0.9)}"><circle cx="30" cy="28" r="24" fill="rgba(255,255,255,.7)" stroke="#3A2A1C" stroke-width="2"/>${[[20,20,"#E0442E"],[34,32,"#FFD84D"],[38,18,"#3A8F5C"],[24,36,"#2E5E8C"],[30,26,"#F2A07B"]].map(([x,y,c])=>`<circle cx="${x}" cy="${y}" r="5" fill="${c}"/>`).join("")}<rect x="18" y="50" width="24" height="26" fill="#C8361F" stroke="#3A2A1C" stroke-width="2"/><rect x="12" y="76" width="36" height="10" fill="#3A2A1C"/></svg>`};
+  if(kind==="sticker") return {w:Math.round(S*0.4),h:Math.round(S*0.4),svg:`<svg viewBox="0 0 40 40" width="${Math.round(S*0.4)}" height="${Math.round(S*0.4)}"><circle cx="20" cy="20" r="18" fill="#FFD84D" stroke="#3A2A1C" stroke-width="1.5"/><text x="20" y="24" text-anchor="middle" style="font:800 11px sans-serif;fill:#2A2200">${["NEW","$5","RARE","USED"][h%4]}</text></svg>`};
+  if(kind==="cassettes") return {w,h:Math.round(S*0.42),svg:`<svg viewBox="0 0 60 42" width="${w}" height="${Math.round(S*0.42)}">${[0,1,2].map(k=>`<g transform="translate(${k*3},${k*-12+24})"><rect width="50" height="14" rx="2" fill="${["#2E5E8C","#C8361F","#141414"][k]}" stroke="#3A2A1C"/><rect x="8" y="3" width="34" height="8" fill="#F5E9C8"/></g>`).join("")}</svg>`};
+  if(kind==="cds") return {w,h:Math.round(S*0.5),svg:`<svg viewBox="0 0 60 50" width="${w}" height="${Math.round(S*0.5)}">${[0,1,2,3].map(k=>`<rect x="${k*4}" y="${k*-3+14}" width="40" height="34" fill="${["#7B3FA0","#3A8F5C","#FFD84D","#E8E8E8"][k]}" stroke="#3A2A1C" transform="rotate(${k*3-4} 30 30)"/>`).join("")}</svg>`};
+  if(kind==="sale") return {w,h:Math.round(S*0.7),svg:`<svg viewBox="0 0 60 70" width="${w}" height="${Math.round(S*0.7)}"><path d="M30 2v14" stroke="#3A2A1C" stroke-width="2"/><rect x="4" y="16" width="52" height="50" fill="#C8361F" stroke="#3A2A1C" stroke-width="2" transform="rotate(-6 30 40)"/><text x="30" y="38" text-anchor="middle" transform="rotate(-6 30 40)" style="font:800 13px sans-serif;fill:#FFF8EC">SALE</text><text x="30" y="56" text-anchor="middle" transform="rotate(-6 30 40)" style="font:800 12px sans-serif;fill:#FFD84D">${["$5","2 FOR 1","20%"][h%3]}</text></svg>`};
+  return {w,h:Math.round(S*0.85),svg:`<svg viewBox="0 0 60 85" width="${w}" height="${Math.round(S*0.85)}"><rect x="2" y="2" width="56" height="80" fill="#2E5E8C" stroke="#3A2A1C" stroke-width="2" transform="rotate(4 30 42)"/><circle cx="30" cy="34" r="16" fill="#FFD84D" transform="rotate(4 30 42)"/><text x="30" y="70" text-anchor="middle" transform="rotate(4 30 42)" style="font:800 9px sans-serif;fill:#FFF8EC">LIVE FRI</text></svg>`};
+}
+function buildWall(){
+  const sc=$("#rb-wscroll"); if(!sc) return;
+  WALL.list=wallList(); WALL.nodes.clear();
+  const track=$("#rb-wtrack"); track.innerHTML="";
+  const H=sc.clientHeight||420, Wv=sc.clientWidth||700;
+  const R=Math.max(1,Math.round((H-34)/160)), S=Math.max(70,Math.min(170,(H-34)/R-30)), CW=S+20;
+  const cols=Math.ceil(WALL.list.length/R), total=Math.max(Wv,40+cols*CW);
+  Object.assign(WALL,{H,Wv,R,S,CW,cols,total});
+  $("#rb-wstage").style.height=H+"px";
+  $("#rb-wspace").style.height=Math.max(0,total-Wv)+"px";
+  track.style.width=total+"px";
+  let sh=""; for(let row=0;row<R;row++){ const y=12+row*(S+30)+S+2; sh+=`<div class="shelf" style="top:${y}px;width:${total}px"></div>`; }
+  track.insertAdjacentHTML("beforeend",sh+`<div class="wfloor" style="width:${total}px"></div>`);
+  const gof={artist:r=>letterOf(r),genre:r=>r.genre||"Other",year:r=>BINBY.year.of(r),value:r=>valueBand(valueOf(r))}[state.wallBy]||(r=>letterOf(r));
+  WALL.tags=[]; let lastG=null; WALL.list.forEach((r,k)=>{ const g=gof(r); if(g!==lastG){ lastG=g; const c=Math.floor(k/R), row=k%R;
+    WALL.tags.push({c,html:`<div class="shelftag" style="left:${22+c*CW}px;top:${12+row*(S+30)+S+3}px;max-width:${Math.max(CW*2-10,60)}px">${esc(g)}</div>`}); } });
+  WALL.props=[]; for(let c=5;c<cols;c+=6+(hash("p"+c)%4)){ const h=hash("w"+c), row=h%R, kind=PROPS[h%PROPS.length], p=propSVG(kind,S,h);
+    const x=24+c*CW-Math.round(p.w*0.45), y=12+row*(S+30)+S+2-p.h;
+    WALL.props.push({c,html:`<div class="prop scene p-${kind}" data-anim="1400" style="left:${x}px;top:${y}px">${p.svg}</div>`}); }
+  $("#rb-wallcount").innerHTML=`<b>${WALL.list.length}</b> record${WALL.list.length===1?"":"s"}`;
+  if(!WALL.list.length) track.insertAdjacentHTML("beforeend",`<div class="wempty" style="width:${Wv}px">${listItems()?"None of this playlist's records are in the library yet.":"Nothing matches the search."}</div>`);
+  sc.scrollTop=0; paintWall();
+  if(!sc._bound){ sc._bound=1; let raf=0; sc.addEventListener("scroll",()=>{ if(!raf) raf=requestAnimationFrame(()=>{ raf=0; paintWall(); }); },{passive:true}); bindWall(); }
+}
+function paintWall(){
+  const sc=$("#rb-wscroll"), track=$("#rb-wtrack"); if(!sc||!track) return;
+  const x=sc.scrollTop, max=Math.max(1,WALL.total-WALL.Wv);
+  track.style.transform=`translateX(${-x}px)`;
+  const pr=$("#rb-prog"); if(pr) pr.style.width=Math.round(100*Math.min(1,x/max))+"%";
+  const c0=Math.max(0,Math.floor((x-24)/WALL.CW)-1), c1=Math.min(WALL.cols-1,Math.ceil((x+WALL.Wv)/WALL.CW)+1), keep=new Set();
+  const inList=new Set((listItems()||[]).map(it=>norm(it.artist)+"|"+norm(it.album)));
+  for(let c=c0;c<=c1;c++) for(let row=0;row<WALL.R;row++){
+    const k=c*WALL.R+row, r=WALL.list[k]; if(!r) continue; keep.add(k);
+    if(WALL.nodes.has(k)) continue;
+    const el=document.createElement("button"); el.className="wrec"+(inList.has(r.key)?" inpl":""); el.dataset.k=k; el.dataset.i=r.i;
+    el.setAttribute("aria-label",`${r.artist}, ${r.title}. Hover to see the back, click to open.`);
+    el.style.cssText=`left:${24+c*WALL.CW}px;top:${12+row*(WALL.S+30)}px;width:${WALL.S}px;height:${WALL.S}px;transform:rotate(${((hash(r.key)%5)-2)*0.5}deg)`;
+    el.innerHTML=`<div class="inner"><div class="face front">${sleeve(r)}</div></div>`;
+    track.appendChild(el); WALL.nodes.set(k,el); hydrateCovers(el);
+  }
+  WALL.nodes.forEach((el,k)=>{ if(!keep.has(k)){ el.remove(); WALL.nodes.delete(k); } });
+  $$("#rb-wtrack .prop,#rb-wtrack .shelftag").forEach(p=>p.parentNode.removeChild(p));
+  track.insertAdjacentHTML("beforeend",WALL.tags.filter(p=>p.c>=c0-2&&p.c<=c1+1).map(p=>p.html).join("")+WALL.props.filter(p=>p.c>=c0-1&&p.c<=c1+1).map(p=>p.html).join(""));
+}
+function flipRec(el,on){
+  if(on&&!el.querySelector(".back")){ const r=RECS[+el.dataset.i]; if(r) el.querySelector(".inner").insertAdjacentHTML("beforeend",backFace(r)); }
+  el.classList.toggle("flip",on);
+}
+function bindWall(){
+  const track=$("#rb-wscroll"); let lastPT="mouse";
+  track.addEventListener("pointerdown",e=>{ lastPT=e.pointerType||"mouse"; },true);
+  track.addEventListener("mouseover",e=>{ const el=e.target.closest(".wrec"); if(!el||el._hov) return; el._hov=1; el._t=setTimeout(()=>flipRec(el,true),600); });
+  track.addEventListener("mouseout",e=>{ const el=e.target.closest(".wrec"); if(!el||el.contains(e.relatedTarget)) return; el._hov=0; clearTimeout(el._t); flipRec(el,false); });
+  track.addEventListener("click",e=>{ const el=e.target.closest(".wrec"); if(!el) return;
+    if(lastPT==="touch"&&!el.classList.contains("flip")){ $$(".wrec.flip").forEach(x=>x!==el&&flipRec(x,false)); flipRec(el,true); return; }
+    openGate(RECS[+el.dataset.i]); });
+}
+
+/* gatefold: side A on the left, side B on the right */
+function openGate(r){
+  if(!r) return;
+  const m=$("#rb-modal"), items=listItems()||[], hl=new Set(items.filter(x=>norm(x.artist)+"|"+norm(x.album)===r.key).map(x=>norm(x.t)));
+  DJ.filter(x=>x.k&&x.k.startsWith(r.key+"|")).forEach(x=>{ if(state.list==="draft") hl.add(norm(x.t)); });
+  const cov=coverOf(r);
+  m.innerHTML=`<div class="gate" role="dialog" aria-modal="true" aria-label="${esc(r.artist+", "+r.title)}">
+   <div class="gatehead">${cov?`<img src="${esc(cov)}" alt="">`:`<div class="sw" style="background:${backColor(r)}"></div>`}<div class="t">${esc(r.artist)}<b>${esc(r.title)}</b></div>
+    <button class="btn sm go" id="rb-gplay">Put it on</button><button class="btn sm" id="rb-gx">Close</button></div>
+   <div class="leaves"><div class="leaf l"><p class="note">Looking up the tracklist…</p></div><div class="leaf r"></div></div></div>`;
+  m.hidden=false;
+  const close=()=>{ m.hidden=true; m.innerHTML=""; document.removeEventListener("keydown",esck); };
+  const esck=e=>{ if(e.key==="Escape") close(); };
+  document.addEventListener("keydown",esck);
+  m.onclick=e=>{ if(e.target===m) close(); };
+  $("#rb-gx").onclick=close;
+  $("#rb-gplay").onclick=()=>{ close(); state.mode="dig"; renderAll(); play(r.i); };
+  $("#rb-gx").focus();
+  lookup(r).then(info=>{ if(m.hidden) return;
+    const L=m.querySelector(".leaf.l"), Rt=m.querySelector(".leaf.r"); if(!L) return;
+    if(!info||!info.sides||!info.sides.length){ L.innerHTML=`<p class="note">No tracklist found for this pressing yet.</p>`; return; }
+    const side=s=>`<h4>${esc(s.name)}</h4><ol>${s.tracks.map(t=>`<li class="${hl.has(norm(t.t))?"hl":""}"><span class="n">${esc(t.n)}</span><span>${esc(t.t)}</span><span class="tm">${t.len?fmtLen(t.len):""}</span></li>`).join("")}</ol>`;
+    let sides=info.sides;
+    if(sides.length===1&&sides[0].tracks.length>3){ const t=sides[0].tracks, h=Math.ceil(t.length/2); sides=[{name:"First half",tracks:t.slice(0,h)},{name:"Second half",tracks:t.slice(h)}]; }
+    L.innerHTML=sides.filter((s,k)=>k%2===0).map(side).join(""); Rt.innerHTML=sides.filter((s,k)=>k%2===1).map(side).join("")||`<p class="note">That's the whole record.</p>`;
+  });
+}
+
+/* ---------- Manage Records (admin only): add, remove, fill missing ---------- */
+const QUALITY=["","Mint (M)","Near Mint (NM)","Very Good Plus (VG+)","Very Good (VG)","Good (G)","Fair or Poor"];
+const GENRE_MAP={"R&B/Soul":"Soul/R&B","Soul":"Soul/R&B","R&B":"Soul/R&B","Singer/Songwriter":"Singer-Songwriter","Dance":"Funk/Disco","Disco":"Funk/Disco","Funk":"Funk/Disco","Alternative":"Indie","Christmas":"Holiday","Holiday":"Holiday","Comedy":"Comedy/Spoken Word","Spoken Word":"Comedy/Spoken Word","Children's Music":"Children's","Vocal":"Easy Listening","Hip-Hop/Rap":"Hip-Hop","Soundtrack":"Soundtrack","Hard Rock":"Hard Rock","Progressive":"Prog Rock","Electronica":"Electronic"};
+let addInfo=null, addDet=null, rmPick=null, catRel=null;
+function alertBox(id,kind,t){ const e=$("#"+id); if(e) e.innerHTML=t?`<div class="alert ${kind}" role="status">${t}</div>`:""; }
+function renderManage(){
+  if(AUTH.role!=="admin"){ state.mode="dig"; renderAll(); return; }
+  const genres=[...new Set(RECS.map(r=>r.genre))].sort(), colls=[...new Set(RECS.map(r=>r.coll).filter(Boolean))].sort();
+  $("#rb-main").innerHTML=`<div class="mgr">
+   <div class="panel"><div class="pbar"><span class="glab">Add</span><span class="ptitle">Add a record</span></div><div class="mbody">
+    <div class="form">
+     <label class="full">Catalog number<input id="ad-cat" autocomplete="off" placeholder="Optional. On the spine or center label, like SD 19104"></label>
+     <label>Artist<input id="ad-artist" autocomplete="off"></label>
+     <label>Album<input id="ad-album" autocomplete="off"></label>
+     <button class="btn lookbtn" id="ad-look" disabled>Look up fields</button>
+     <label>Year<input id="ad-year" inputmode="numeric" placeholder="Fills itself if blank"></label>
+     <label>Genre<select id="ad-genre"><option value="__auto">Fills itself</option>${genres.map(g=>`<option>${esc(g)}</option>`).join("")}<option value="__new">New genre…</option></select><input id="ad-genre-new" placeholder="New genre" hidden></label>
+     <label>Styles<input id="ad-styles" placeholder="Fills itself if blank"></label>
+     <label>Label<input id="ad-label" placeholder="Fills itself if blank"></label>
+     <label>Pressing<select id="ad-press"><option value="">Fills itself</option><option value="OP">OP (original pressing)</option><option value="RE">RE (reissue)</option><option value="RP">RP (repress)</option></select></label>
+     <label>Runtime<input id="ad-runtime" placeholder="Fills itself if blank"></label>
+     <label>Collection<select id="ad-coll">${colls.map(g=>`<option>${esc(g)}</option>`).join("")}<option value="__new">New collection…</option></select><input id="ad-coll-new" placeholder="New collection" hidden></label>
+     <label>Source<input id="ad-from" placeholder="Shop or person"></label>
+     <label>Value<span class="dollar"><span>$</span><input id="ad-value" inputmode="decimal" placeholder="Fills itself if blank"></span></label>
+     <label>Quality<select id="ad-quality">${QUALITY.map(q=>`<option value="${esc(q)}">${q||"Not graded"}</option>`).join("")}</select></label>
+     <label class="full">Cover picture link<input id="ad-cover" placeholder="Fills itself if blank"></label>
+    </div>
+    <div id="ad-years" class="chips"></div>
+    <div id="ad-cats" class="chips"></div>
+    <div class="note" id="ad-found">Type the catalog number, or the artist and album, then Look up fields. Blank fields fill themselves, and you can change any of them.</div>
+    <div class="passnote">Your admin passcode is required to add or remove a record.</div>
+    <div class="savebar"><input id="ad-pass" type="password" autocomplete="current-password" placeholder="Passcode" aria-label="Passcode" style="width:170px" value="${esc(AUTH.pass)}"><button class="btn manage" id="ad-save">Add to Library</button></div>
+    <div id="ad-msg"></div>
+    <details class="fill"><summary>Fill missing tracklists and covers</summary><div class="inner">
+     <div>Looks up every album with no tracklist or cover yet, a few seconds each, and saves what it finds to your sheet. Keep this tab open while it runs.</div>
+     <div class="pbar2"><i id="fill-bar"></i></div><div id="fill-note"></div><div><button class="btn sm" id="fill-go">Start filling</button></div>
+    </div></details>
+   </div></div>
+   <div class="mcol">
+   <div class="panel"><div class="pbar"><span class="glab">Update</span><span class="ptitle">Years and values</span></div><div class="mbody">
+    <div class="note">Sets ${YV_YEARS.length} years to the most likely first release year, and fills every blank Value with its Discogs price range, lowest listing to top condition price. Values you typed yourself stay as they are. It also saves the copies for sale behind each price wave.</div>
+    <div class="note">It takes about 45 minutes for the whole library, so keep this tab open. You can stop and pick up later.</div>
+    <div class="pbar2"><i id="yv-bar"></i></div><div id="yv-note"></div>
+    <div><button class="btn manage" id="yv-go">Update years and values</button></div>
+   </div></div>
+   <div class="panel"><div class="pbar"><span class="glab">Remove</span><span class="ptitle">Remove a record</span></div><div class="mbody">
+    <input id="rm-q" type="search" placeholder="Search your library" aria-label="Search your library">
+    <div class="results" id="rm-results"></div>
+    <div id="rm-chosen"></div>
+    <div id="rm-msg"></div>
+   </div></div></div></div>`;
+  ["genre","coll"].forEach(k=>{ const s=$("#ad-"+k), n=$("#ad-"+k+"-new"); s.onchange=()=>{ n.hidden=s.value!=="__new"; if(!n.hidden) n.focus(); }; });
+  const lk=$("#ad-look"), en=()=>{ lk.disabled=!(val("ad-cat")||(val("ad-artist")&&val("ad-album"))); };
+  $("#ad-artist").oninput=en; $("#ad-album").oninput=en; $("#ad-cat").oninput=()=>{ catRel=null; en(); };
+  addInfo=null; addDet=null; catRel=null; lk.onclick=addLookup;
+  $("#ad-save").onclick=addSave;
+  $("#fill-go").onclick=()=>{ if(!LIVE){ FILL.msg="Fill missing works on the live page."; fillUI(); return; } FILL.on=!FILL.on; FILL.msg=""; if(FILL.on) fillRun(); fillUI(); };
+  fillUI();
+  $("#yv-go").onclick=()=>{ if(!LIVE){ YV.msg="This works on the live page."; yvUI(); return; } YV.on=!YV.on; YV.msg=""; if(YV.on) yvRun(); yvUI(); };
+  yvUI();
+  rmPick=null; $("#rm-q").oninput=rmSearch; rmSearch();
+}
+function setAuto(id,v){ const e=$("#"+id); if(!e||e.value||v==null||v==="") return; e.value=v; e.classList.add("auto"); e.addEventListener("input",()=>e.classList.remove("auto"),{once:true}); }
+function setGenre(g){ if(!g) return; const s=$("#ad-genre"); if(!s||s.value!=="__auto") return; g=GENRE_MAP[g]||g;
+  let o=[...s.options].find(o=>o.value.toLowerCase()===g.toLowerCase()); if(!o){ o=document.createElement("option"); o.textContent=g; s.insertBefore(o,s.lastChild); }
+  s.value=o.value; s.classList.add("auto"); }
+function setPress(p){ const s=$("#ad-press"); if(s&&!s.value&&p){ s.value=p; s.classList.add("auto"); } }
+/* catalog number: MusicBrainz knows the catalog number of each pressing */
+const credit=x=>(x["artist-credit"]||[]).map(c=>c.name+(c.joinphrase||"")).join("");
+async function catLookup(cat){
+  const tight=cat.replace(/[\s\-.]/g,"");
+  const qy=`catno:${qq(cat)}`+(tight!==cat?` OR catno:${qq(tight)}`:"");
+  const d=await mbGet(`${MB}release?query=${encodeURIComponent(qy)}&fmt=json&limit=15`);
+  const want=norm(cat).replace(/^0+/,"");
+  return ((d&&d.releases)||[]).filter(x=>(x["label-info"]||[]).some(l=>norm(l["catalog-number"]||"").replace(/^0+/,"")===want));
+}
+function useCatRel(x){
+  catRel=x; $("#ad-cats").innerHTML="";
+  const a=$("#ad-artist"), b=$("#ad-album");
+  if(!a.value){ a.value=credit(x); a.classList.add("auto"); }
+  if(!b.value){ b.value=x.title||""; b.classList.add("auto"); }
+  const li=(x["label-info"]||[]).find(l=>l.label&&l.label.name); if(li) setAuto("ad-label",li.label.name);
+  $("#ad-look").disabled=false;
+}
+async function addLookup(){
+  if(!LIVE){ $("#ad-found").textContent="Look up works on the live page."; return false; }
+  const cat=val("ad-cat");
+  if(cat&&!catRel){
+    $("#ad-found").textContent="Looking up the catalog number…";
+    const hits=await catLookup(cat);
+    if(!hits.length){ $("#ad-found").textContent="No pressing found with that catalog number. Check it, or type the artist and album."; if(!(val("ad-artist")&&val("ad-album"))) return false; }
+    else{
+      const aa=norm(val("ad-artist")), list=aa?hits.filter(x=>norm(credit(x)).includes(aa)||aa.includes(norm(credit(x)))):hits;
+      const pool=list.length?list:hits, titles=[...new Set(pool.map(x=>norm(credit(x))+"|"+norm(x.title)))];
+      if(titles.length>1){
+        $("#ad-found").textContent="More than one record has that catalog number. Pick yours:";
+        $("#ad-cats").innerHTML=pool.slice(0,6).map((x,i)=>`<button class="btn sm" data-c="${i}">${esc(credit(x))}, ${esc(x.title)}${x.date?" ("+esc(x.date.slice(0,4))+")":""}</button>`).join("");
+        $$("#ad-cats [data-c]").forEach(bt=>bt.onclick=()=>{ useCatRel(pool[+bt.dataset.c]); addLookup(); });
+        return false;
+      }
+      useCatRel(pool.find(x=>(x.media||[]).some(m=>/vinyl/i.test(m.format||"")))||pool[0]);
+    }
+  }
+  const artist=val("ad-artist"), album=val("ad-album"); if(!artist||!album) return false;
+  const f=$("#ad-found"), mine=val("ad-year"); f.textContent="Looking it up…";
+  const hit=await itunesHit({artist,title:album});
+  if(hit){ setAuto("ad-cover",hit.artworkUrl100.replace("100x100bb","600x600bb")); setGenre(hit.primaryGenreName); }
+  let dg=null; if(!AUTH.legacy){ try{ dg=await api("discogs",{artist,album,year:mine,save:false}); }catch(e){} }
+  if(dg&&dg.ok){ addDet=dg; setAuto("ad-styles",dg.styles); setAuto("ad-label",dg.label); setPress(dg.press);
+    setAuto("ad-value",dg.value?dg.value.replace(/^\$/,""):(dg.lowest||"")); }
+  const rels=await findReleases(artist,album);
+  const ys=[...new Set(rels.map(x=>(x.date||"").slice(0,4)).filter(Boolean))].sort();
+  if(!mine){ const y=(catRel&&(catRel.date||"").slice(0,4))||(dg&&dg.firstYear)||ys[0]||(hit&&hit.releaseDate&&hit.releaseDate.slice(0,4)); setAuto("ad-year",y); }
+  $("#ad-years").innerHTML=!mine&&ys.length>1?`<span class="lab" style="width:100%">Other years it came out:</span>`+ys.map(y=>`<button class="btn sm" data-y="${y}">${y}</button>`).join(""):"";
+  $$("#ad-years [data-y]").forEach(b=>b.onclick=()=>{ $("#ad-year").value=b.dataset.y; $$("#ad-years [data-y]").forEach(x=>x.classList.toggle("on",x===b)); });
+  const rel=catRel||bestRelease(rels,val("ad-year"));
+  if(catRel&&!val("ad-cover")){ const u=`https://coverartarchive.org/release/${catRel.id}/front-500`; if(await new Promise(ok=>{ const im=new Image(); im.onload=()=>ok(true); im.onerror=()=>ok(false); setTimeout(()=>ok(false),12000); im.src=u; })) setAuto("ad-cover",u); }
+  addInfo=rel?await releaseInfo(rel.id):null;
+  if(addInfo){ const tot=[].concat(...addInfo.sides.map(s=>s.tracks)).reduce((a,t)=>a+(t.len||0),0); if(tot) setAuto("ad-runtime",fmtLen(tot)); }
+  if(dg&&dg.ok) setAuto("ad-runtime",dg.runtime);
+  const n=addInfo?addInfo.sides.reduce((a,s)=>a+s.tracks.length,0):0;
+  const got=[catRel&&"pressing from the catalog number",hit&&"cover and genre",dg&&dg.ok&&"Discogs details",n&&`${n} tracks`].filter(Boolean);
+  f.textContent=got.length?`Found the ${got.join(", ")}. Check the fields, then Add to Library.`:"Nothing found. Check the spelling, or fill it in yourself.";
+  return got.length>0;
+}
+function addRow(){
+  const artist=val("ad-artist"), album=val("ad-album");
+  const gv=val("ad-genre"), genre=gv==="__new"?val("ad-genre-new"):(gv==="__auto"?"":gv), coll=val("ad-coll")==="__new"?val("ad-coll-new"):val("ad-coll");
+  return {artist,album,year:val("ad-year"),genre,collection:coll,shelf:coll,from:val("ad-from"),source:val("ad-from"),value:val("ad-value").replace(/^\$/,""),quality:val("ad-quality"),cover:val("ad-cover")};
+}
+async function addSave(){
+  if(!val("ad-artist")||!val("ad-album")){ alertBox("ad-msg","bad","Fill in the artist and album first."); return; }
+  const pass=val("ad-pass"); if(!pass){ alertBox("ad-msg","bad","Type your passcode first."); return; }
+  if(!addInfo&&!addDet&&LIVE){ alertBox("ad-msg","info","Looking up the blank fields first…"); await addLookup(); }
+  const row=addRow(), key=norm(row.artist)+"|"+norm(row.album);
+  if(RECS.some(r=>r.key===key)&&!$("#ad-save").dataset.again){ $("#ad-save").dataset.again="1"; alertBox("ad-msg","info",`${esc(row.album)} is already in your library. Press Add to Library again to add a second copy.`); return; }
+  alertBox("ad-msg","info","Adding…");
+  try{ const d=await api("add",{row},pass);
+    if(!d||!d.ok){ alertBox("ad-msg","bad",esc(d&&d.error||"The sheet said no. Check the passcode.")); return; }
+    const det={key,artist:row.artist,album:row.album,styles:val("ad-styles"),label:val("ad-label"),press:val("ad-press"),runtime:val("ad-runtime"),discogs:addDet&&addDet.discogs||"",lowest:addDet&&addDet.lowest||"",forSale:addDet&&addDet.forSale||"",suggested:addDet&&addDet.suggested||{}};
+    if(!AUTH.legacy&&(det.styles||det.label||det.press||det.runtime)){ api("details",{items:[det]},pass).catch(()=>{}); SDB.details[key]=DET_MINE[key]=det; }
+    const rec=mk(RECS.length,{artist:row.artist,title:row.album,year:+row.year||null,genre:row.genre||"Other",coll:row.collection,from:row.from,cost:null,...vrange(row.value),quality:row.quality,cover:row.cover});
+    RECS.push(rec); if(addInfo) saveInfo(rec,addInfo); flushWrites(); indexHues(); updateCount();
+    renderManage(); alertBox("ad-msg","ok",`Added <b>${esc(row.album)}</b> by ${esc(row.artist)} to your library.`);
+  }catch(e){ alertBox("ad-msg","bad","Couldn't reach your sheet. Try again in a minute."); }
+}
+function rmSearch(){
+  const q=val("rm-q").toLowerCase(), box=$("#rm-results"); if(!box) return;
+  if(!q){ box.innerHTML=`<div class="note">Type part of an artist or album name.</div>`; return; }
+  const hits=RECS.filter(r=>(r.artist+" "+r.title).toLowerCase().includes(q)).slice(0,30);
+  box.innerHTML=hits.length?hits.map(r=>`<button class="result${rmPick===r.i?" on":""}" data-i="${r.i}"><span class="thumb">${sleeve(r)}</span><span><b>${esc(r.title)}</b><br><span class="note">${esc(r.artist)}${r.year?" · "+r.year:""}</span></span></button>`).join(""):`<div class="note">No match.</div>`;
+  hydrateCovers(box);
+  box.querySelectorAll(".result").forEach(b=>b.onclick=()=>{ rmPick=+b.dataset.i; rmChosen(); box.querySelectorAll(".result").forEach(x=>x.classList.toggle("on",x===b)); });
+}
+function rmChosen(){
+  const r=RECS[rmPick], box=$("#rm-chosen"); if(!r){ box.innerHTML=""; return; }
+  box.innerHTML=`<div class="chosen"><span class="thumb">${sleeve(r)}</span><span><b>${esc(r.title)}</b>${esc(r.artist)}${r.year?" · "+r.year:""}</span></div>
+   <div style="margin-top:10px" id="rm-act"><button class="btn danger" id="rm-go">Remove from Library</button></div>`;
+  hydrateCovers(box);
+  $("#rm-go").onclick=()=>{ $("#rm-act").innerHTML=`<div class="confirm"><b>Are you sure?</b><span>${esc(r.title)} by ${esc(r.artist)} comes off your sheet.</span><div class="savebar"><button class="btn danger" id="rm-yes">Yes, remove it</button><button class="btn" id="rm-no">No, keep it</button></div></div>`;
+    $("#rm-no").onclick=rmChosen;
+    $("#rm-yes").onclick=async()=>{ const pass=val("ad-pass")||AUTH.pass; alertBox("rm-msg","info","Removing…");
+      try{ const d=await api("remove",{key:r.key},pass);
+        if(!d||!d.ok){ alertBox("rm-msg","bad",esc(d&&d.error==="Unknown action."?"Your sheet script needs the update before records can be removed here.":(d&&d.error)||"The sheet said no.")); return; }
+        RECS.splice(r.i,1); RECS.forEach((x,k)=>x.i=k); if(state.now===r.i) state.now=null; else if(state.now>r.i) state.now--;
+        rmPick=null; updateCount(); box.innerHTML=""; rmSearch(); alertBox("rm-msg","ok",`Removed <b>${esc(r.title)}</b> by ${esc(r.artist)} from your library.`);
+      }catch(e){ alertBox("rm-msg","bad","Couldn't reach your sheet. Try again in a minute."); } };
+  };
+}
+/* fill missing tracklists and covers (runs in this browser, saves to the sheet) */
+const TRIED=ls("rb-tried2")||{}, CAAT=ls("rb-caa2")||{};
+const FILL={on:false,done:0,total:0,found:0,cov:0,msg:""};
+function needT(r){ return !(SDB.tracks[r.key]&&SDB.tracks[r.key].length)&&!TRIED[r.key]; }
+function needC(r){ return !r.cover&&(COVERS[r.key]===undefined||(!COVERS[r.key]&&!CAAT[r.key])); }
+function fillUI(){
+  const n=$("#fill-note"), bar=$("#fill-bar"), go=$("#fill-go"); if(!n) return;
+  const left=RECS.filter(r=>needT(r)||needC(r)).length;
+  if(go) go.textContent=FILL.on?"Stop":(FILL.done?"Keep filling":"Start filling");
+  if(bar) bar.style.width=(FILL.total?Math.round(100*FILL.done/FILL.total):0)+"%";
+  n.textContent=FILL.msg||(FILL.on||FILL.done?`Checked ${FILL.done} of ${FILL.total}. Found ${FILL.found} tracklists and ${FILL.cov} covers.`+(FILL.on?" Working…":` ${left} albums still to check.`):`${left} of ${RECS.length} albums still need a tracklist or cover.`);
+}
+async function fillRun(){
+  const todo=RECS.filter(r=>needT(r)||needC(r)); FILL.total=todo.length; FILL.done=0; FILL.found=0; FILL.cov=0; fillUI();
+  for(const r of todo){
+    if(!FILL.on) break;
+    if(needT(r)){ const info=await lookup(r); if(info&&info.sides&&info.sides.length) FILL.found++; else { TRIED[r.key]=1; ls("rb-tried2",TRIED); } }
+    if(needC(r)&&FILL.on){ let url=COVERS[r.key]===undefined?await itunesCover(r):0;
+      if(url===0||url===""){ const c=await caaCover(r); if(c!==null){ CAAT[r.key]=1; ls("rb-caa2",CAAT); if(c) url=c; } }
+      if(url!==null){ COVERS[r.key]=url; ls("rb-covers",COVERS); if(url){ FILL.cov++; queueWrite("covers",{key:r.key,artist:r.artist,album:r.title,cover:url}); } } await wait(1500); }
+    FILL.done++; if(FILL.done%10===0) flushWrites(); fillUI();
+  }
+  FILL.on=false; flushWrites(); fillUI();
+}
+
+/* years and values: corrected years, then Discogs price ranges into blank Value cells, a few records per call */
+const YV_YEARS=[["bobwills|bestofbobwills",1970],["bootsrandolph|yakinsaxman",1964],["captainandtennille|songofjoy",1976],["enochlightandthelightbrigade|spanishstrings",1966],["fleetwoodmac|kilnhouse",1970],["garynuman|pleasureprinciple",1979],["loureed|berlin",1973],["steviewonder|musicofmymind",1972],["tangerinedream|alphacentauriatem",1976],["romantics|romantics",1980],["patboone|patboonesgreatesthits",1975],["patrickcleandenim|radioheartbreak",2011],["beachboys|highwater",1973],["variousartists|goldendaysofbritishrock",1976],["originaldixielandjazzband|originaldixielandjazzband",1970],["fatsdomino|blueberryhill",1988]];
+const VALDONE=ls("rb-val2")||{}, EBDONE=ls("rb-eb1")||{}, LOWDONE=ls("rb-low1")||{};
+const YV={on:false,done:0,total:0,ranges:0,lows:0,none:0,years:null,msg:""};
+function yvLeft(){ return RECS.filter(r=>(r.value==null&&!VALDONE[r.key])||(!r.vhi&&/discogs lowest/i.test(r.vsrc||"")&&!LOWDONE[r.key])); }
+function yvUI(){
+  const n=$("#yv-note"), bar=$("#yv-bar"), go=$("#yv-go"); if(!n) return;
+  const left=yvLeft().length, yd=ls("rb-yrs1");
+  if(go) go.textContent=YV.on?"Stop":(YV.done||yd?(left?"Keep going":"Run again"):"Update years and values");
+  if(bar) bar.style.width=(YV.total?Math.round(100*YV.done/YV.total):(yd&&!left?100:0))+"%";
+  const yrs=YV.years!=null?`Years: ${YV.years} changed. `:(yd?"Years are done. ":"");
+  n.textContent=YV.msg||(YV.on||YV.done?`${yrs}Values: checked ${YV.done} of ${YV.total}, ${YV.ranges} got a price range`+(YV.lows?`, ${YV.lows} only a lowest price`:"")+(YV.none?`, ${YV.none} not on Discogs`:"")+"."+(YV.ebTotal?` eBay copies: ${YV.ebDone} of ${YV.ebTotal}`+(YV.ebRanges?`, ${YV.ebRanges} got an eBay range`:"")+".":"")+(YV.on?" Working…":""):`${yrs}${left} records have no Value yet.`);
+}
+async function yvRun(){
+  try{
+    if(!ls("rb-yrs1")){
+      const res=await api("apply",{items:YV_YEARS.map(([key,year])=>({key,year}))});
+      if(!res||!res.ok){ YV.on=false; YV.msg=res&&/unknown action/i.test(res.error||"")?"Your sheet script needs the update first. Paste the new script, redeploy, then press this again.":"Couldn't change the years: "+((res&&res.error)||"no answer")+"."; yvUI(); return; }
+      YV.years=res.years; ls("rb-yrs1",1);
+      const yy=Object.fromEntries(YV_YEARS); RECS.forEach(r=>{ if(yy[r.key]) r.year=yy[r.key]; });
+    }
+    const todo=yvLeft(); YV.total=todo.length; YV.done=0; YV.ranges=0; YV.lows=0; YV.none=0; yvUI();
+    let sugSeen=0, okSeen=0; const errs=[], nfKeys=[];
+    for(let i=0;i<todo.length&&YV.on;i+=6){
+      const batch=todo.slice(i,i+6);
+      const res=await api("values",{items:batch.map(r=>({key:r.key,artist:r.artist,album:r.title,year:r.year||""}))});
+      if(!res||!res.ok){ YV.on=false; YV.msg=res&&/unknown action/i.test(res.error||"")?"Your sheet script needs the update first. Paste the new script, redeploy, then press this again.":"Stopped: "+((res&&res.error)||"no answer from the sheet")+"."; break; }
+      for(const o of res.done){
+        const r=batch.find(b=>b.key===o.key), nf=!o.ok&&/not found/i.test(o.error||"");
+        if(!o.ok&&!nf){ errs.push(o.error||"no answer"); continue; }
+        if(o.sugErr){ errs.push(o.sugErr); continue; }
+        VALDONE[o.key]=1; LOWDONE[o.key]=1; if(o.ebay!=null) EBDONE[o.key]=1; YV.done++;
+        if(!o.ok){ YV.none++; nfKeys.push(o.key); continue; } okSeen++; if(o.sug) sugSeen++;
+        if(o.value&&r&&(r.value==null||/\((Discogs|eBay)\)$/.test(o.value))) Object.assign(r,vrange(o.value));
+        if(o.value){ if(/\((Discogs|eBay)\)$/.test(o.value)) YV.ranges++; else YV.lows++; }
+      }
+      ls("rb-val2",VALDONE); ls("rb-eb1",EBDONE); ls("rb-low1",LOWDONE); yvUI();
+      if(res.ebay) YV.ebay=true;
+      if(errs.length){ YV.on=false; YV.msg="Stopped: "+errs[0]+(errs[0].endsWith(".")?"":".")+" Nothing was skipped. Send Claude this line."; break; }
+      if(YV.done>=24&&!okSeen){ nfKeys.forEach(k=>delete VALDONE[k]); ls("rb-val2",VALDONE); YV.on=false; YV.msg="Stopped: the first "+YV.done+" records all came back not found on Discogs, which points to a problem, not your records. Send Claude this line."; break; }
+
+    }
+    /* eBay top-up for records looked up before the eBay keys were added */
+    const eb=YV.on?RECS.filter(r=>VALDONE[r.key]&&!EBDONE[r.key]&&!(SDB.details[r.key]&&SDB.details[r.key].ebay)):[];
+    if(eb.length){ YV.ebTotal=eb.length; YV.ebDone=0; yvUI();
+      for(let i=0;i<eb.length&&YV.on;i+=10){
+        const batch=eb.slice(i,i+10);
+        const res=await api("ebayfill",{items:batch.map(r=>({key:r.key,artist:r.artist,album:r.title}))});
+        if(!res||!res.ok){ if(res&&/eBay keys/i.test(res.error||"")){ YV.ebTotal=0; break; } YV.on=false; YV.msg=res&&/unknown action/i.test(res.error||"")?"Your sheet script needs the update first. Paste the new script, redeploy, then press this again.":"Stopped: "+((res&&res.error)||"no answer from the sheet")+"."; break; }
+        for(const o of res.done){ EBDONE[o.key]=1; YV.ebDone++; if(SDB.details[o.key]) delete SDB.details[o.key];
+          const r=RECS.find(x=>x.key===o.key); if(o.value&&r&&(r.value==null||/lowest/i.test(r.vsrc||""))){ Object.assign(r,vrange(o.value)); YV.ebRanges=(YV.ebRanges||0)+1; } }
+        ls("rb-eb1",EBDONE); yvUI();
+      }
+    }
+  }catch(e){ YV.on=false; YV.msg="Stopped: "+(e.message||e)+". Press Keep going to pick up where it left off."; }
+  YV.on=false; yvUI(); if(typeof renderAll==="function"&&state.mode!=="manage") renderAll();
+}
+
+/* ---------- shell ---------- */
+function updateCount(){
+  const c=$("#rb-count"); if(c) c.innerHTML=`<b>${RECS.length}</b> records in library`;
+  const m=$("#rb-manage"); if(m){ m.hidden=AUTH.role!=="admin"; m.classList.toggle("on",state.mode==="manage"); }
+  const w=$("#rb-who"); if(w) w.innerHTML=AUTH.role?`${AUTH.role==="admin"?"Signed in as admin":"Signed in as "+esc(AUTH.name||"guest")} · <button id="rb-out">Sign out</button>`:"";
+  const o=$("#rb-out"); if(o) o.onclick=signOut;
+}
+function renderDig(){
+  $("#rb-main").innerHTML=`<div class="dig">
+   <div class="panel binsp"><div class="pbar"><span class="glab">Bins by</span><div class="seg">${Object.keys(BINBY).map(k=>`<button class="btn sm${state.by===k?" on":""}" data-by="${k}">${BINBY[k].label}</button>`).join("")}</div><button class="btn sm" id="rb-allbin">All records</button></div>
+    <div class="steps"><span><b>1</b>Pick how to sort</span><span><b>2</b>Scroll to walk down the aisle</span><span><b>3</b>Click a bin to open it below</span></div>
+    <div class="bscroll" id="rb-bscroll" tabindex="0" aria-label="Record bins"><div class="scene tube" data-anim="2200" aria-hidden="true"><i class="lamp"></i><i class="cone"></i>${[0,1,2,3,4,5,6,7].map(k=>`<i class="mote" style="--k:${k}"></i>`).join("")}</div><svg id="rb-bsvg" role="img" aria-label="Record bins, each as long as its number of records"></svg></div></div>
+   <div class="panel np" id="rb-np"></div>
+   <div class="panel inbin"><div class="pbar"><span class="glab">In the bin</span><span class="sel" id="rb-insel"></span><span class="right" id="rb-inright"></span></div><div class="cols" id="rb-cols"></div></div>
+  </div>`;
+  $$("[data-by]").forEach(b=>b.onclick=()=>{ state.by=b.dataset.by; state.bin=""; state.view="bin"; $$("[data-by]").forEach(x=>x.classList.toggle("on",x===b)); $("#rb-bscroll").scrollTop=0; renderBins(); renderInBin(); });
+  $("#rb-allbin").onclick=()=>openBin("");
+  bindBins();
+  requestAnimationFrame(()=>{ renderBins(); renderInBin(); renderDeck(); });
+}
+function renderAll(){
+  ROOT.dataset.layout=state.layout; ROOT.dataset.mode=state.mode;
+  $$("[data-mode]").forEach(b=>b.classList.toggle("on",b.dataset.mode===state.mode));
+  updateCount(); saveDJ(); stopAudio();
+  if(state.mode==="dj") renderDJMode(); else if(state.mode==="manage") renderManage(); else renderDig();
+  applyVibe(); renderPop(); fit();
+}
+function navHTML(){
+  const counts={}; RECS.forEach(r=>counts[r.genre]=(counts[r.genre]||0)+1);
+  const gs=Object.keys(GENRE_PAT).filter(g=>counts[g]).sort((a,b)=>counts[b]-counts[a]);
+  return `<div class="grp"><span class="glab">Browse</span><button class="btn" data-mode="dig">Bin Digging</button></div>
+   <div class="grp"><span class="glab">What to play?</span><button class="btn" data-mode="dj">DJ Playlists<span id="rb-djn"></span></button><button class="btn" id="rb-pickbtn">Pick for me</button>${GUMBALL}</div>
+   <div class="grp"><span class="glab">Vibe</span><button class="btn" data-vibe="auto" title="Follows the record that's playing">Auto</button><button class="btn" data-vibe="plain">Plain</button><select id="rb-vibesel" aria-label="Genre vibe"><option value="">Genre…</option>${gs.map(g=>`<option value="${esc(g)}">${esc(g)}</option>`).join("")}</select></div>
+   <div class="grp"><span class="glab">Find</span><input id="rb-q" type="search" placeholder="Artist or album" aria-label="Search" value="${esc(state.q)}"></div>`;
+}
+function bindNav(){
+  $$("[data-mode]").forEach(b=>b.onclick=()=>{ state.mode=b.dataset.mode; renderAll(); });
+  $("#rb-pickbtn").onclick=()=>{ state.pop=!state.pop; renderPop(); };
+  $("#rb-gum").onclick=gumballPick;
+  $$("[data-vibe]").forEach(b=>b.onclick=()=>setVibe(b.dataset.vibe));
+  $("#rb-vibesel").onchange=e=>setVibe(e.target.value||"auto");
+  let qt; $("#rb-q").oninput=e=>{ clearTimeout(qt); qt=setTimeout(()=>{ state.q=e.target.value; if(state.mode==="dj") buildWall(); else if(state.mode==="dig"){ if(state.view==="flight") state.view="bin"; renderInBin(); } },220); };
+  $("#rb-manage").onclick=()=>{ state.mode=state.mode==="manage"?"dig":"manage"; renderAll(); };
+}
+/* fit the page to the window; on phones the page scrolls down instead */
+function fit(){
+  const phone=window.innerWidth<=780;
+  document.documentElement.style.overflow=document.body.style.overflow=phone?"auto":"hidden";
+  if(phone){ ROOT.style.removeProperty("--rb-h"); return; }
+  ROOT.style.setProperty("--rb-h",Math.max(520,window.innerHeight)+"px");
+}
+let rz; window.addEventListener("resize",()=>{ clearTimeout(rz); rz=setTimeout(()=>{ fit();
+  if(state.mode==="dig"){ renderBins(); renderInBin(); } else if(state.mode==="dj") buildWall(); },150); });
+
+/* ---------- sign in ---------- */
+function showSignIn(msg){
+  const s=$("#rb-signin"); s.hidden=false;
+  s.innerHTML=`<form class="signbox" id="rb-sform"><h1>Dedubs Den of Discs</h1>
+   <div class="note">A private record store for friends. Sign in with the passcode you were given.</div>
+   <label>Your name<input id="si-name" autocomplete="nickname" placeholder="Shown on playlists you save" value="${esc(AUTH.name)}"></label>
+   <label>Passcode<input id="si-pass" type="password" autocomplete="current-password" required></label>
+   <button class="btn go" type="submit" id="si-go">Come in</button>
+   <div id="si-msg">${msg?`<div class="alert bad">${esc(msg)}</div>`:""}</div></form>`;
+  $("#rb-sform").onsubmit=async e=>{ e.preventDefault();
+    const pass=val("si-pass"), name=val("si-name"); if(!pass) return;
+    if(!SHEET_WRITE){ alertBox("si-msg","bad","This page isn't connected to the sheet yet."); return; }
+    $("#si-go").disabled=true; alertBox("si-msg","info","Checking…");
+    const res=await signIn(pass,name);
+    if(!res.ok){ $("#si-go").disabled=false; alertBox("si-msg","bad",esc(res.error)); return; }
+    if(res.role==="guest"&&!name){ $("#si-go").disabled=false; alertBox("si-msg","bad","Type your name too, so your playlists show who made them."); $("#si-name").focus(); return; }
+    Object.assign(AUTH,{pass,role:res.role,name,legacy:!!res.legacy}); ls("rb-pass",pass); ls("rb-role",res.role); ls("rb-guest",name);
+    alertBox("si-msg","info","Opening the store…");
+    try{ await loadAll(); }catch(err){ $("#si-go").disabled=false; alertBox("si-msg","bad","Signed in, but the record list didn't load. Try again in a minute."); return; }
+    s.hidden=true; s.innerHTML=""; start();
+  };
+  setTimeout(()=>{ const p=$("#si-pass"); if(p) p.focus(); },50);
+}
+function signOut(){
+  ["rb-pass","rb-role","rb-cache"].forEach(k=>ls(k,null));
+  Object.assign(AUTH,{pass:"",role:"",legacy:false}); RECS=[]; SDB={tracks:{},rel:{},prices:{},details:{},lists:[]};
+  $("#rb-nav").innerHTML=""; $("#rb-main").innerHTML=""; updateCount(); showSignIn();
+}
+let started=false;
+function start(){
+  started=true;
+  const ne=$("#rb-neon"); if(ne&&!ne.innerHTML) ne.innerHTML=NEON;
+  $("#rb-nav").innerHTML=navHTML(); bindNav();
+  if(state.mode==="manage"&&AUTH.role!=="admin") state.mode="dig";
+  renderAll();
+}
+async function init(){
+  fit();
+  ROOT._rb={st:()=>state,recs:()=>RECS,sdb:()=>SDB,auth:()=>AUTH,play,openGate,renderAll,buildWall,CRATES,WALL};
+  /* a passcode saved by an older page has no role with it: ask to sign in again */
+  if(AUTH.pass&&AUTH.role!=="admin"&&AUTH.role!=="guest"){ ["rb-pass","rb-role","rb-cache"].forEach(k=>ls(k,null)); AUTH.pass=""; AUTH.role=""; }
+  if(!AUTH.pass){ showSignIn(); return; }
+  const cached=readCache(), sig=d=>d?JSON.stringify([d.records,d.lists,Object.keys(d.tracks||{}).length,Object.keys(d.details||{}).length]):"";
+  const before=sig(cached);
+  if(cached&&applyLoad(cached,true)) start(); else status("Opening the store…",0);
+  try{
+    const d=await loadAll(); status(""); updateCount();
+    if(!started) start();
+    else if(sig(d)!==before){ const keepScroll=$("#rb-bscroll")?$("#rb-bscroll").scrollTop:0; $("#rb-nav").innerHTML=navHTML(); bindNav(); renderAll(); const sc=$("#rb-bscroll"); if(sc) sc.scrollTop=keepScroll; }
+  }catch(e){
+    const msg=String(e&&e.message||"");
+    if(/passcode|sign in/i.test(msg)){ signOut(); showSignIn("Your passcode has changed. Sign in again."); return; }
+    if(!started) showSignIn("The record list didn't load. Check your connection and try again.");
+    else status("Showing your saved copy of the list. The sheet didn't answer just now ("+msg.slice(0,80)+").",15000);
+  }
+}
+init();
+
+}catch(e){var m=document.getElementById("rb-main");if(m)m.innerHTML='<p style="padding:16px;color:#b00020;font:15px sans-serif">The store hit an error: '+String(e&&e.message||e).replace(/</g,"&lt;")+'</p>';if(window.console)console.error(e);}
+})();
+</script>
+</body>
+</html>

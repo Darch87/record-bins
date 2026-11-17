@@ -69,16 +69,6 @@ html,body{margin:0;padding:0;background:#F6F5F0}
 #rb .nav{grid-area:nav;display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;justify-content:flex-end;align-content:center}
 #rb-main{grid-area:main;min-height:0;min-width:0;display:flex;flex-direction:column}
 
-/* test layout: the main buttons become a panel on the left, title on the right of a thinner bar */
-#rb[data-layout="b"]{grid-template-columns:230px minmax(0,1fr);grid-template-areas:"nav head" "nav main"}
-#rb[data-layout="b"] .head{min-height:44px;justify-content:flex-end;padding:0 4px}
-#rb[data-layout="b"] h1{font-size:22px}
-#rb[data-layout="b"] .nav{flex-direction:column;align-items:stretch;justify-content:flex-start;background:var(--panel);border:1px solid var(--soft);border-radius:12px;padding:10px;gap:10px;overflow-y:auto}
-#rb[data-layout="b"] .grp{flex-direction:column;align-items:stretch;padding:0 0 6px;gap:5px}
-#rb[data-layout="b"] .grp .glab{border-radius:8px 8px 0 0;margin:-1.5px -1.5px 2px;height:32px}
-#rb[data-layout="b"] .grp>*:not(.glab){margin:0 6px}
-#rb[data-layout="b"] .grp input[type=search]{width:auto}
-
 /* panels */
 #rb .panel{background:var(--panel);border:1px solid var(--soft);border-radius:12px;position:relative;overflow:hidden;min-width:0;min-height:0;display:flex;flex-direction:column}
 #rb .pbar{flex:0 0 auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:46px;padding:6px 8px;background:var(--ctl);border-bottom:1.5px solid var(--ctlb)}
@@ -90,25 +80,53 @@ html,body{margin:0;padding:0;background:#F6F5F0}
 #rb .steps b{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;background:var(--lab);color:var(--labink);font-size:11px;margin-right:4px;border:1px solid var(--labb)}
 
 /* bin digging layout: bins top left, now playing top right, the open bin across the bottom */
-#rb .dig{flex:1;min-height:0;display:grid;grid-template-columns:minmax(300px,.85fr) minmax(0,1.35fr);grid-template-rows:minmax(0,52fr) minmax(0,48fr);gap:8px}
+#rb .dig{flex:1;min-height:0;display:grid;grid-template-columns:minmax(300px,.72fr) minmax(0,1.6fr);grid-template-rows:minmax(0,50fr) minmax(0,50fr);gap:8px}
 #rb .inbin{grid-column:1 / -1}
 
 /* bins (axonometric, parallel, length to scale) */
 #rb .bscroll{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin}
 #rb .bscroll svg{display:block;width:100%}
-#rb .bscroll svg text{font-family:var(--body);font-weight:700;paint-order:stroke;stroke-linejoin:round}
-#rb .bin{cursor:pointer}
-#rb .bin:hover .binfront{filter:brightness(.94)}
+#rb .bscroll svg text{font-family:var(--body);font-weight:700;paint-order:stroke;stroke-linejoin:round;stroke:#fff;stroke-width:3px}
+#rb .bscroll .blab{font-size:13px}
+#rb .bscroll .bnum{font-size:11px;font-weight:400}
+#rb .bin{cursor:pointer;outline:none}
+#rb .bin .rk{transform-box:fill-box}
+#rb .bin:hover .rk,#rb .bin:focus-visible .rk{animation:rbrip .55s ease-out both;animation-delay:var(--d)}
+#rb .bin:hover .blab{text-decoration:underline}
+@keyframes rbrip{0%{transform:none}35%{transform:translateY(-5px)}100%{transform:none}}
 
 /* now playing */
 #rb .np{padding:0}
 #rb .nptitle{flex:0 0 auto;margin:8px 8px 0;padding:8px 12px;border-radius:10px;background:var(--hi);color:var(--hiink);box-shadow:inset 0 0 0 1.5px var(--line)}
 #rb .nptitle .ar{font-weight:700;font-size:15px;line-height:1.2}
 #rb .nptitle .al{font:800 clamp(20px,2vw,26px)/1.05 var(--display);margin-top:2px}
-#rb .npbody{flex:1;min-height:0;display:grid;grid-template-columns:minmax(150px,.8fr) minmax(0,1.3fr);gap:6px;padding:6px 8px 0}
-#rb .npleft{display:flex;flex-direction:column;min-height:0;align-items:stretch}
-#rb .tt{flex:1;min-height:90px;display:flex;align-items:center;justify-content:center;perspective:none;padding:8px 0 18px;container-type:size}
-#rb .axo{transform:rotateX(52deg) rotateZ(-32deg);transform-style:preserve-3d;width:min(100%,280px,110cqh);aspect-ratio:1.25;position:relative}
+#rb .npmeta{flex:0 0 auto;margin:5px 8px 0;padding:2px 4px;font-size:13.5px;line-height:1.35;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#rb .npmeta .yr{font-weight:800}
+#rb .npmeta .press{display:inline-block;font-weight:800;color:var(--accent);margin-left:2px}
+#rb .npmeta .styles{color:var(--muted)}
+#rb .npbody{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,.78fr) minmax(0,1fr) minmax(0,1.3fr);gap:8px;padding:6px 8px 8px}
+#rb .npcover{min-height:0;min-width:0;container-type:size;display:flex;align-items:flex-start;justify-content:center;padding-top:4px}
+#rb .slv{position:relative;width:min(100cqw,100cqh);aspect-ratio:1;perspective:900px;cursor:pointer}
+#rb .slv.empty{border:2px dashed var(--ctlb);border-radius:4px;cursor:default;display:flex;align-items:center;justify-content:center}
+#rb .slv .hole{font:800 13px var(--display);color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+#rb .slv .flipper{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .6s cubic-bezier(.3,1.3,.5,1);z-index:2}
+#rb .slv.over .flipper{transform:rotateY(180deg)}
+#rb .slv .face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border:1.2px solid var(--line);overflow:hidden;box-shadow:4px 5px 0 rgba(0,0,0,.16)}
+#rb .slv .back{transform:rotateY(180deg);background:var(--bk,#777)}
+#rb .slv .back img{width:100%;height:100%;object-fit:cover;display:block}
+#rb .slv .vinyl{position:absolute;top:3%;left:3%;width:94%;height:94%;border-radius:50%;background:radial-gradient(circle,#d9d7cf 0 15%,#141414 15.5% 100%);z-index:1;opacity:0}
+#rb .npbody.fresh .slv .flipper{animation:rbpull .6s cubic-bezier(.2,.9,.3,1.2) both}
+#rb .npbody.fresh .slv .vinyl{animation:rbslide 1s ease-in-out .35s both}
+#rb .npbody.fresh .disc.in{animation:rbdiscin .5s ease-out 1.05s both}
+#rb .npbody.fresh .arm.on{animation:rbarm 1.1s cubic-bezier(.4,1.6,.5,1) 1.2s both}
+@keyframes rbpull{from{transform:translateY(40%) rotate(-4deg);opacity:0}to{transform:none;opacity:1}}
+@keyframes rbslide{0%{transform:none;opacity:1}70%{transform:translateX(85%);opacity:1}100%{transform:translateX(120%);opacity:0}}
+@keyframes rbdiscin{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}
+@keyframes rbarm{0%{transform:rotate(0)}60%{transform:rotate(27deg)}80%{transform:rotate(23deg)}100%{transform:rotate(24deg)}}
+#rb .disc{transform-box:view-box;transform-origin:140px 128px}
+#rb .npdeck{display:flex;flex-direction:column;min-height:0;min-width:0}
+#rb .tt{flex:1;min-height:90px;display:flex;align-items:center;justify-content:center;padding:6px 0 16px;container-type:size;cursor:pointer}
+#rb .axo{transform:rotateX(52deg) rotateZ(-32deg);transform-style:preserve-3d;width:min(100%,118cqh);aspect-ratio:1.25;position:relative}
 #rb .plinth{position:absolute;inset:0;border-radius:6px;background:var(--plinth,#F1F1EC);border:1.2px solid var(--line);transform-style:preserve-3d}
 #rb .plinth .f{position:absolute;background:var(--plinth2,#D9D9D2);border:1.2px solid var(--line);backface-visibility:hidden}
 #rb .plinth .fb{left:0;right:0;top:100%;height:var(--th,16px);transform-origin:top;transform:rotateX(-90deg)}
@@ -117,9 +135,8 @@ html,body{margin:0;padding:0;background:#F6F5F0}
 #rb .plinth .fl{top:0;bottom:0;right:100%;width:var(--th,16px);transform-origin:right;transform:rotateY(-90deg)}
 #rb .plinth svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 #rb .spin{transform-box:fill-box;transform-origin:center}
-#rb .spin.on{animation:rbspin 1.8s linear infinite}
 @keyframes rbspin{to{transform:rotate(360deg)}}
-#rb .arm{transform-box:view-box;transform-origin:262px 46px;transition:transform .6s ease}
+#rb .arm{transform-box:view-box;transform-origin:262px 46px;transition:transform .5s cubic-bezier(.4,1.5,.5,1)}
 #rb .arm.on{transform:rotate(24deg)}
 #rb .meta{flex:0 0 auto;font-size:13.5px;line-height:1.35;padding:2px 2px 6px;color:var(--ink)}
 #rb .meta .yr{font-weight:800}
@@ -146,12 +163,13 @@ html,body{margin:0;padding:0;background:#F6F5F0}
 #rb .play:not(.has) i{visibility:hidden}
 #rb .djb{width:18px;height:18px;border:1.5px solid var(--line);border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;line-height:1;color:transparent;background:#fff}
 #rb .djb.on{background:var(--accent);border-color:var(--accent);color:var(--accentink)}
-#rb .money{flex:0 0 auto;margin:6px 8px 8px;padding:7px 10px;border-radius:10px;background:var(--ctl);border:1px solid var(--ctlb);display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 14px;align-items:center;font-size:13px}
-#rb .money .facts{display:flex;flex-direction:column;gap:1px;white-space:nowrap}
+#rb .money{flex:0 0 auto;height:122px;overflow:hidden;padding:6px 9px;border-radius:10px;background:var(--ctl);border:1px solid var(--ctlb);display:flex;flex-direction:column;gap:2px;font-size:12.5px}
+#rb .money .facts{display:flex;align-items:baseline;gap:6px;white-space:nowrap;overflow:hidden}
+#rb .money .forsale{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #rb .money .facts b{font-size:14px}
 #rb .money .facts span{color:var(--muted)}
 #rb .wave{display:flex;flex-direction:column;gap:2px;min-width:0}
-#rb .wave svg{width:100%;height:58px;display:block;overflow:visible}
+#rb .wave svg{width:100%;height:62px;display:block;overflow:visible}
 #rb .wfoot{display:flex;flex-wrap:wrap;align-items:center;gap:2px 12px}
 #rb .wkey{display:flex;flex-wrap:wrap;gap:2px 10px;font-size:11px;color:var(--muted)}
 #rb .wkey span{display:inline-flex;align-items:center;gap:4px}
@@ -165,29 +183,27 @@ html,body{margin:0;padding:0;background:#F6F5F0}
 #rb .wave .cap b{color:var(--ink)}
 
 /* the open bin: crates across the width, each moved with vertical scroll */
-#rb .cols{flex:1;min-height:0;display:flex;gap:6px;padding:6px;overflow:hidden}
-#rb .col{flex:1 1 0;min-width:0;display:flex;flex-direction:column;border:1.5px solid var(--line);border-radius:8px;background:var(--crate,#EFE7DA);overflow:hidden;position:relative}
-#rb .collab{flex:0 0 auto;display:flex;justify-content:space-between;gap:6px;align-items:center;font:800 12.5px/1.2 var(--display);padding:4px 8px;border-bottom:1.5px solid var(--line);background:var(--panel);white-space:nowrap;overflow:hidden}
+#rb .cols{flex:1;min-height:0;display:flex;gap:8px;padding:6px;overflow:hidden}
+#rb .col{flex:1 1 0;min-width:0;display:flex;flex-direction:column;border:1px solid var(--soft);border-radius:8px;background:linear-gradient(#FBF8F2 60%,#EFE6D6);overflow:hidden;position:relative}
+#rb .collab{flex:0 0 auto;display:flex;justify-content:space-between;gap:6px;align-items:center;font:800 13px/1.2 var(--display);padding:4px 8px;border-bottom:1px solid var(--soft);background:var(--panel);white-space:nowrap;overflow:hidden}
+#rb .collab small{font:400 12px var(--body);color:var(--muted)}
 #rb .collab .cur{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:22px;padding:0 5px;border-radius:5px;background:var(--hi);box-shadow:inset 0 0 0 1.5px var(--line);font-size:14px}
 #rb .crate{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin;position:relative}
 #rb .stage{position:sticky;top:0;left:0;width:100%;overflow:hidden}
-#rb .stage .floor{position:absolute;left:0;right:0;height:2px;background:var(--line);opacity:.35}
-#rb .card{position:absolute;left:50%;transform-style:preserve-3d;transform-origin:50% 100%;transition:transform .12s linear}
-#rb .card .face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border:1.2px solid var(--line);overflow:hidden}
+#rb .cbox{position:absolute;left:0;top:0;pointer-events:none}
+#rb .cbox.back{z-index:0}
+#rb .cbox.front{z-index:1500}
+#rb .card{position:absolute;left:0;top:0;transform-style:preserve-3d;transform-origin:50% 100%;transition:transform .22s cubic-bezier(.3,1.4,.5,1),opacity .15s}
+#rb .card .face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border:1.2px solid var(--line);overflow:hidden;box-shadow:0 -2px 0 rgba(0,0,0,.08)}
 #rb .card .back{transform:rotateX(180deg);background:var(--bk,#888)}
 #rb .card .back img{width:100%;height:100%;object-fit:cover;display:block}
 #rb .card.div .front{background:#F3EFE6;border-radius:3px}
-#rb .card.div .tab{position:absolute;top:-16%;left:10%;width:34%;height:20%;background:#F3EFE6;border:1.2px solid var(--line);border-bottom:0;border-radius:6px 6px 0 0;display:flex;align-items:center;justify-content:center;font:800 15px var(--display);backface-visibility:hidden}
+#rb .card.div .tab{position:absolute;top:-14%;left:8%;width:30%;height:18%;background:#F3EFE6;border:1.2px solid var(--line);border-bottom:0;border-radius:6px 6px 0 0;display:flex;align-items:center;justify-content:center;font:800 15px var(--display);backface-visibility:hidden}
 #rb .card.div .big{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:800 42px var(--display);color:var(--line);opacity:.18}
 #rb .card.rec{cursor:pointer}
+#rb .card.rec.up .front{box-shadow:0 10px 18px rgba(0,0,0,.25)}
 #rb .card.rec.on .front{outline:3px solid var(--accent);outline-offset:2px}
 #rb .crate .spacer{width:1px}
-
-/* classic crates (test) */
-#rb .classic{padding:10px 12% 60%}
-#rb .crec{display:block;width:100%;max-width:170px;margin:0 auto calc(min(100%,170px) * -0.62);aspect-ratio:1;transform:perspective(600px) rotateX(40deg);transform-origin:50% 100%;transition:transform .2s,margin .2s;position:relative;z-index:1;box-shadow:0 7px 0 -1px var(--line)}
-#rb .crec:hover,#rb .crec.on{transform:perspective(600px) rotateX(6deg);margin-bottom:4%;z-index:5}
-#rb .crec.on{outline:3px solid var(--accent);outline-offset:2px}
 
 /* sleeves */
 #rb .sleeve{position:relative;width:100%;height:100%;container-type:inline-size;overflow:hidden;background:var(--s1);color:var(--s3);isolation:isolate}
@@ -263,7 +279,6 @@ html,body{margin:0;padding:0;background:#F6F5F0}
 #rb .wrec .back{transform:rotateY(180deg);background:var(--bk,#777)}
 #rb .wrec .back img{width:100%;height:100%;object-fit:cover}
 #rb .wrec.inpl .front{outline:3px solid var(--accent);outline-offset:2px}
-#rb .prop{position:absolute;pointer-events:none;z-index:5}
 #rb .wempty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--muted)}
 
 /* gatefold */
@@ -354,16 +369,114 @@ html,body{margin:0;padding:0;background:#F6F5F0}
   #rb .leaf.l{border-radius:10px 10px 0 0;border-right:1.5px solid var(--line);border-bottom:1px dashed var(--line)}
   #rb .leaf.r{border-radius:0 0 10px 10px;border-left:1.5px solid var(--line);border-top:0}
 }
-@media (prefers-reduced-motion:reduce){#rb .spin.on{animation:none}#rb *{transition:none!important;animation:none!important}}
+
 #rb .pbar>.glab,#rb .deskscroll>.glab{border-radius:8px;margin:0}
 #rb .signin,#rb .modal{position:fixed}
+
+/* ---------- round 6: store props that come alive when the mouse moves over them ---------- */
+#rb .scene{cursor:default}
+/* neon OPEN sign in the top bar */
+#rb #rb-neon{display:inline-flex}
+#rb .neon{display:inline-flex;align-items:center}
+#rb .neon .nt{font:800 17px var(--display);letter-spacing:.12em;fill:#FF6FB5;filter:drop-shadow(0 0 2px #FF6FB5) drop-shadow(0 0 5px rgba(255,111,181,.7))}
+#rb .neon .nb{stroke:#6FE7FF;filter:drop-shadow(0 0 3px rgba(111,231,255,.8))}
+#rb .neon.go .nt{animation:rbbuzz 1.6s steps(1,end) both}
+#rb .neon.go .nb{animation:rbbuzz 1.6s steps(1,end) .15s both}
+@keyframes rbbuzz{0%{opacity:1}8%{opacity:.15}12%{opacity:1}20%{opacity:.25}24%{opacity:1}46%{opacity:.4}50%{opacity:1}70%{opacity:.1}78%{opacity:1}100%{opacity:1}}
+/* gumball machine: hover jiggles the gumballs, a click turns the knob and drops one */
+#rb .gumball{display:inline-flex;align-items:center;gap:4px;height:34px;padding:0 8px 0 2px;border-radius:8px;font-weight:700;font-size:14px;white-space:nowrap}
+#rb .gumball:hover{background:var(--hi)}
+#rb .gumball svg{height:34px;width:auto;overflow:visible}
+#rb .gumball .balls circle,#rb .gumball .knob,#rb .gumball .drop{transform-box:fill-box;transform-origin:center}
+#rb .gumball .drop{opacity:0}
+#rb .gumball.go .balls circle{animation:rbjig .3s ease-in-out 3 alternate}
+#rb .gumball .balls circle:nth-child(2n){animation-delay:.08s}
+#rb .gumball.turning .knob{animation:rbknob .5s ease-in-out}
+#rb .gumball.turning .drop{animation:rbdrop .85s cubic-bezier(.5,0,.6,1) both}
+@keyframes rbjig{from{transform:translate(0,0)}to{transform:translate(1px,-2px)}}
+@keyframes rbknob{to{transform:rotate(360deg)}}
+@keyframes rbdrop{0%{opacity:1;transform:translate(-9px,-8px)}45%{opacity:1;transform:translate(0,0)}70%{transform:translate(6px,-2px)}100%{opacity:0;transform:translate(14px,0)}}
+/* the light tube over the aisle: it stutters on, and dust drifts in the beam */
+#rb .bscroll{position:relative}
+#rb .tube{position:sticky;top:0;display:block;height:0;z-index:4;pointer-events:none}
+#rb .tube .lamp{position:absolute;left:50%;top:6px;width:110px;margin-left:-55px;height:8px;border-radius:4px;background:#FFFDF2;border:1.2px solid #8A877E;box-shadow:0 0 8px rgba(255,246,200,.95);pointer-events:auto}
+#rb .tube .lamp::after{content:"";position:absolute;inset:-10px -12px}
+#rb .tube .cone{position:absolute;left:50%;top:14px;width:190px;margin-left:-95px;height:170px;background:linear-gradient(rgba(255,246,200,.42),rgba(255,246,200,0));clip-path:polygon(32% 0,68% 0,100% 100%,0 100%)}
+#rb .tube .mote{position:absolute;left:calc(50% - 50px + var(--k)*13px);top:calc(30px + var(--k)*13px % 70px);width:3px;height:3px;border-radius:50%;background:#C9B98E;opacity:0}
+#rb .tube.go .lamp{animation:rbbuzz 1.2s steps(1,end) both}
+#rb .tube.go .cone{animation:rbbuzz 1.2s steps(1,end) both}
+#rb .tube.go .mote{animation:rbmote 2.2s ease-in-out both;animation-delay:calc(var(--k)*90ms)}
+@keyframes rbmote{0%{opacity:0;transform:translate(0,0)}25%{opacity:.9}100%{opacity:0;transform:translate(calc(var(--k)*3px - 10px),60px)}}
+/* the store cat */
+#rb .cat{cursor:pointer}
+#rb .cat *{transform-box:fill-box}
+#rb .cat .tail{transform-origin:0% 100%}
+#rb .cat .chead{transform-origin:80% 80%}
+#rb .cat .cbody{transform-origin:50% 100%}
+#rb .cat .zz{font:800 9px var(--body);fill:#8A877E;stroke:none!important}
+#rb .cat .eyes{transform-origin:center}
+#rb .cat.go .tail{animation:rbswish .5s ease-in-out 4 alternate}
+#rb .cat.go .chead{animation:rbhead 2.6s ease-in-out both}
+#rb .cat.go .cbody{animation:rbstretch 2.6s ease-in-out both}
+#rb .cat.go .zz{animation:rbzz 1.2s ease-out both}
+#rb .cat.go .z2{animation-delay:.2s}
+#rb .cat.go .eyes{animation:rbblink 2.6s steps(1,end) both}
+@keyframes rbswish{from{transform:rotate(-14deg)}to{transform:rotate(16deg)}}
+@keyframes rbhead{0%{transform:none}20%{transform:rotate(-14deg) translateY(-3px)}60%{transform:rotate(8deg) translateY(-3px)}100%{transform:none}}
+@keyframes rbstretch{0%{transform:none}25%{transform:scale(1.18,.9)}45%{transform:scale(.95,1.08)}70%{transform:none}100%{transform:none}}
+@keyframes rbzz{to{transform:translate(8px,-14px);opacity:0}}
+@keyframes rbblink{0%{transform:scaleY(1)}20%{transform:scaleY(-1.6)}80%{transform:scaleY(-1.6)}86%{transform:scaleY(1)}}
+/* milk crates in four colours */
+#rb .col:nth-child(4n+1){--crate:#D9483A;--crate2:#A9362A}
+#rb .col:nth-child(4n+2){--crate:#3F74B5;--crate2:#2E5A8E}
+#rb .col:nth-child(4n+3){--crate:#E9B52F;--crate2:#B98B1A}
+#rb .col:nth-child(4n+4){--crate:#3E9A64;--crate2:#2D7448}
+/* DJ wall: labels on the shelves, letter board, posters, props, desk */
+#rb .shelftag{position:absolute;z-index:6;background:#FFF8D6;border:1px solid #5E3D20;font:800 11px/1.3 var(--display);padding:1px 6px 2px;border-radius:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.05em;text-transform:uppercase;color:#3A2A1C;box-shadow:1px 2px 0 rgba(0,0,0,.18);pointer-events:none}
+#rb .board li{animation:rbclack .3s steps(3,end) both;animation-delay:calc(var(--k,0)*55ms);transform-origin:50% 0}
+@keyframes rbclack{from{transform:rotateX(90deg);opacity:0}to{transform:none;opacity:1}}
+#rb .poster:hover{animation:rbflutter .9s ease-in-out}
+@keyframes rbflutter{0%,100%{transform:rotate(var(--r,0deg))}25%{transform:rotate(calc(var(--r,0deg) + 3deg)) skewY(-1.5deg)}55%{transform:rotate(calc(var(--r,0deg) - 2deg)) skewY(1deg)}80%{transform:rotate(calc(var(--r,0deg) + 1deg))}}
+#rb .prop{position:absolute;z-index:5;pointer-events:auto}
+#rb .prop svg{display:block;overflow:visible;transform-origin:50% 100%}
+#rb .prop.go svg{animation:rbwobble .7s ease-in-out 2}
+#rb .p-sale svg,#rb .p-poster svg{transform-origin:50% 0}
+#rb .p-sale.go svg{animation:rbswing 1.4s ease-in-out}
+#rb .p-sticker svg{transform-origin:0 0}
+#rb .p-sticker.go svg{animation:rbpeel 1.2s ease-in-out}
+#rb .p-gumball.go svg circle{animation:rbjig .25s ease-in-out 4 alternate;transform-box:fill-box}
+@keyframes rbwobble{0%,100%{transform:none}30%{transform:rotate(-5deg)}65%{transform:rotate(4deg)}}
+@keyframes rbswing{0%,100%{transform:none}20%{transform:rotate(12deg)}45%{transform:rotate(-8deg)}70%{transform:rotate(4deg)}}
+@keyframes rbpeel{0%,100%{transform:none}40%{transform:rotate(-14deg) scale(1.08)}}
+#rb .deskart svg .scene{pointer-events:auto}
+#rb .phone .ring{opacity:0}
+#rb .phone.go .ring{animation:rbring .25s steps(2,end) 6}
+#rb .phone .hs{transform-box:fill-box;transform-origin:50% 100%}
+#rb .phone.go .hs{animation:rbshake .12s linear 10 alternate}
+@keyframes rbring{0%{opacity:1}50%{opacity:0}}
+@keyframes rbshake{from{transform:rotate(-4deg) translateY(-2px)}to{transform:rotate(4deg) translateY(-2px)}}
+#rb .ash .smoke{transform-box:fill-box;transform-origin:50% 100%}
+#rb .ash.go .s1{animation:rbsmoke 2.6s ease-out both}
+#rb .ash.go .s2{animation:rbsmoke 2.6s ease-out .6s both}
+@keyframes rbsmoke{0%{opacity:.8;transform:none}100%{opacity:0;transform:translate(4px,-22px) scale(1.4,1.6)}}
+#rb .sign .swing{transform-box:view-box;transform-origin:28px -14px}
+#rb .sign.go .swing{animation:rbswing 1.8s ease-in-out}
+@media (max-width:780px){
+  #rb .npbody{grid-template-columns:minmax(0,.8fr) minmax(0,1fr);grid-template-rows:auto auto}
+  #rb .npright{grid-column:1 / -1}
+  #rb .npcover{height:180px}
+  #rb .tt{min-height:180px}
+  #rb .money{height:auto}
+  #rb .npmeta{white-space:normal}
+}
+@media (prefers-reduced-motion:reduce){#rb *{transition:none!important;animation:none!important}}
 
 </style>
 </head>
 <body>
 <div id="rb" data-layout="a" data-mode="dig">
   <header class="head">
-    <div class="brandrow"><h1>Dedubs Den of Discs</h1><span class="count" id="rb-count"></span><button class="btn manage" id="rb-manage" hidden>Manage Records</button></div>
+    <div class="brandrow"><h1>Dedubs Den of Discs</h1><span id="rb-neon"></span><span class="count" id="rb-count"></span><button class="btn manage" id="rb-manage" hidden>Manage Records</button></div>
     <div class="who" id="rb-who"></div>
   </header>
   <nav class="nav" id="rb-nav" aria-label="Main"></nav>
@@ -378,7 +491,7 @@ html,body{margin:0;padding:0;background:#F6F5F0}
 (function(){
 "use strict";
 try{
-/* Dedubs Den of Discs, round 5 */
+/* Dedubs Den of Discs, round 6 */
 const CFG = document.getElementById("rb-config");
 const SHEET_WRITE = (CFG&&CFG.getAttribute("data-write"))||"";
 const LIVE = !/claude|anthropic|usercontent/i.test(location.hostname);
@@ -432,7 +545,7 @@ const BINBY={
   value:{label:"Value",of:r=>valueBand(valueOf(r))}
 };
 const state={mode:"dig",by:"genre",bin:"",q:"",now:null,pop:false,mood:"",eras:new Set(),view:"bin",flight:[],
-  layout:ls("rb-layout")==="b"?"b":"a", crate:ls("rb-crate")==="classic"?"classic":"flip", vibe:ls("rb-vibe")||"auto",
+  layout:"a", crate:"flip", vibe:ls("rb-vibe")||"auto",
   list:"all", djBy:"", wallBy:"artist"};
 
 /* designed sleeves while the real cover loads */
@@ -735,78 +848,188 @@ function applyVibe(){
 }
 function setVibe(v){ state.vibe=v; ls("rb-vibe",v); applyVibe(); }
 
-/* ---------- bins: parallel, each as long as its record count, drawn in plan oblique ---------- */
+/* ---------- the store's props: each one comes alive when the mouse moves over it (or on a tap) ---------- */
+function sceneGo(el){
+  if(!el||el.classList.contains("go")) return;
+  el.classList.add("go"); clearTimeout(el._sg);
+  el._sg=setTimeout(()=>el.classList.remove("go"),+(el.getAttribute("data-anim")||1500));
+}
+ROOT.addEventListener("mouseover",e=>{ const el=e.target.closest&&e.target.closest(".scene"); if(el) sceneGo(el); });
+ROOT.addEventListener("pointerdown",e=>{ if(e.pointerType==="mouse") return; const el=e.target.closest&&e.target.closest(".scene"); if(el) sceneGo(el); },true);
+const NEON=`<span class="scene neon" data-anim="1600" aria-hidden="true"><svg viewBox="0 0 92 40" width="92" height="40"><rect x="1" y="1" width="90" height="38" rx="8" fill="#26211E" stroke="#1B1D21" stroke-width="1.5"/><path d="M46 1 V-8" stroke="#1B1D21"/><text class="nt" x="46" y="27" text-anchor="middle">OPEN</text><rect class="nb" x="6" y="6" width="80" height="28" rx="6" fill="none" stroke-width="1.6"/></svg></span>`;
+const GUMBALL=`<button class="gumball scene" id="rb-gum" data-anim="900" title="Gumball pick: one random record from your Pick for me settings" aria-label="Gumball pick: play one random record"><svg viewBox="0 0 44 58" width="34" height="45" aria-hidden="true">
+ <circle cx="22" cy="18" r="16" fill="rgba(255,255,255,.85)" stroke="#2A2622" stroke-width="1.6"/>
+ <g class="balls">${[[15,14,"#E0442E"],[25,21,"#FFD84D"],[28,11,"#3A8F5C"],[17,24,"#2E5E8C"],[22,16,"#F2A07B"],[11,19,"#7B3FA0"],[30,25,"#E0442E"]].map(([x,y,c])=>`<circle cx="${x}" cy="${y}" r="3.6" fill="${c}" stroke="rgba(0,0,0,.25)" stroke-width=".6"/>`).join("")}</g>
+ <rect x="12" y="33" width="20" height="16" rx="2" fill="#C8361F" stroke="#2A2622" stroke-width="1.4"/><circle class="knob" cx="22" cy="40" r="3.4" fill="#F5E9C8" stroke="#2A2622"/>
+ <rect x="8" y="49" width="28" height="7" rx="1.5" fill="#2A2622"/><circle class="drop" cx="31" cy="46" r="3.6" fill="#FFD84D" stroke="rgba(0,0,0,.3)" stroke-width=".6"/></svg><span>Gumball pick</span></button>`;
+function gumballPick(){
+  const g=$("#rb-gum"); if(!g||g.classList.contains("turning")) return;
+  const pl=pickPool(); if(!pl.length){ status("No records fit your Pick for me settings."); return; }
+  g.classList.add("turning");
+  setTimeout(()=>{ g.classList.remove("turning"); let n; do{ n=pl[Math.floor(Math.random()*pl.length)].i }while(pl.length>1&&n===state.now);
+    if(state.mode!=="dig"){ state.mode="dig"; renderAll(); } play(n); },RM?0:900);
+}
+
+/* ---------- the aisle: two mirrored rows of bins facing each other, drawn as an axonometric ----------
+   Every bin has the same depth. Records stand at the same spacing in every bin, so a bin is as long as its record count.
+   The left row's titles sit on the left, the right row's on the right. Scrolling walks you down the aisle. */
 function binsList(){
   const f=BINBY[state.by].of, m=new Map();
   RECS.forEach(r=>{ const k=f(r); if(!m.has(k)) m.set(k,[]); m.get(k).push(r); });
-  let arr=[...m.entries()].map(([k,v])=>({key:k,label:k,recs:v}));
+  let arr=[...m.entries()].map(([k,v])=>({key:k,label:k,recs:v.sort((a,b)=>sortName(a).localeCompare(sortName(b)))}));
   if(state.by==="year") arr.sort((a,b)=>a.key==="Year ?"?1:b.key==="Year ?"?-1:a.key.localeCompare(b.key));
   else if(state.by==="value") arr.sort((a,b)=>VALUE_ORDER.indexOf(a.key)-VALUE_ORDER.indexOf(b.key));
   else arr.sort((a,b)=>b.recs.length-a.recs.length);
   return arr;
 }
-const CO=Math.cos(Math.PI/6), SI=0.5;
-function P(x,y,z){ return [(x-y)*CO,(x+y)*SI-z]; }
-function poly(pts,fill,stroke,w){ return `<polygon points="${pts.map(p=>p[0].toFixed(1)+","+p[1].toFixed(1)).join(" ")}" style="fill:${fill};stroke:${stroke};stroke-width:${w||1}px;stroke-linejoin:round"/>`; }
+function poly(pts,fill,stroke,w,cls){ return `<polygon${cls?` class="${cls}"`:""} points="${pts.map(p=>p[0].toFixed(1)+","+p[1].toFixed(1)).join(" ")}" style="fill:${fill};stroke:${stroke};stroke-width:${w||1}px;stroke-linejoin:round"/>`; }
 function cssv(n,d){ const v=getComputedStyle(ROOT).getPropertyValue(n).trim(); return v||d; }
+const AX={KX:-0.24,KY:-0.72,SY:0.94};                      /* the axonometric: heights lean up and to the left */
+function A(x,y,z){ return [x+AX.KX*z, y*AX.SY+AX.KY*z]; }
 function renderBins(){
   const sc=$("#rb-bscroll"); if(!sc) return;
-  const list=binsList(), W=Math.max(260,sc.clientWidth-6);
-  const maxN=Math.max(1,...list.map(b=>b.recs.length));
-  const BD=24, BH=10, RH=18, D=BD+BH+RH+10;          /* depth, wall height, record height, step between bins */
-  const G=Math.round(Math.min(124,W*0.3)), avail=W-G-BD*CO-44;
-  const u=Math.max(0.25,avail/(maxN*CO));            /* one record's thickness, so lengths are to scale */
-  const ln=cssv("--line","#1B1D21"), acc=cssv("--accent","#E0442E"), pan="#FFFFFF", side="#E9E6DD", txt=cssv("--ink","#16181C");
-  let s="", maxY=0;
-  const ox=G+BD*CO, oy=RH+BH+8;
-  list.forEach((b,i)=>{
-    const n=b.recs.length, L=Math.max(u*1.2,n*u), x0=i*D, y0=i*D, on=b.key===state.bin;
-    const T=(x,y,z)=>{ const p=P(x0+x,y0+y,z); return [p[0]+ox,p[1]+oy]; };
-    let g=`<g class="bin${on?" on":""}" data-k="${esc(b.key)}"><title>${esc(b.label)}: ${n} records</title>`;
-    g+=poly([T(0,0,0),T(L,0,0),T(L,0,BH),T(0,0,BH)],side,ln);
-    g+=poly([T(0,0,0),T(0,BD,0),T(0,BD,BH),T(0,0,BH)],side,ln);
-    g+=poly([T(0,0,0),T(L,0,0),T(L,BD,0),T(0,BD,0)],"#F4F2EC",ln);
-    const k=Math.max(1,Math.min(n,Math.floor(L/3.2),60)), step=L/(k+0.6);
-    for(let j=0;j<k;j++){
-      const r=b.recs[Math.floor(j*n/k)], x=step*(j+0.6), h=hueOf(r), hh=RH-((hash(r.key)%3));
-      g+=poly([T(x,3,0),T(x,BD-3,0),T(x,BD-3,hh),T(x,3,hh)],`hsl(${h} 55% ${62+(hash(r.key)%18)}%)`,ln,0.7);
+  const list=binsList(), W=Math.max(300,sc.clientWidth-4);
+  const D=60, WK=44, SP=2.6, PAD=7, GAP=16, HR=36, LIP=11, RISER=50, END=11, TOP=58;   /* bin depth, walkway, record spacing, record height... */
+  const LZ=Math.max(64,Math.min(150,(W-2*D-WK-14)/2));
+  const LX0=LZ+12, LX1=LX0+D, RX0=LX1+WK, RX1=RX0+D;
+  /* fill the shorter row next, keeping the sort order */
+  const rows=[[],[]], len=[TOP,TOP];
+  list.forEach(b=>{ const L=b.recs.length*SP+PAD*2, side=len[0]<=len[1]?0:1; b.side=side; b.y0=len[side]; b.L=L; len[side]+=L+GAP; rows[side].push(b); });
+  const ln="#2A2622", wood="#C9A06B", wood2="#A87D4A", woodTop="#E2C495", inside="#F1E6D2", acc=cssv("--accent","#E0442E"), txt=cssv("--ink","#16181C"), mut=cssv("--muted","#4D525B");
+  const H=Math.ceil(Math.max(len[0],len[1])*AX.SY+30);
+  let s=`<defs><pattern id="rb-tile" width="22" height="22" patternUnits="userSpaceOnUse"><rect width="22" height="22" fill="#F3EFE6"/><rect width="11" height="11" fill="#E4DCCB"/><rect x="11" y="11" width="11" height="11" fill="#E4DCCB"/></pattern></defs>`;
+  /* the floor of the walkway, in checker tiles */
+  s+=`<rect x="${LX1}" y="0" width="${WK}" height="${H}" fill="url(#rb-tile)"/>`;
+  s+=`<line x1="${LX1}" x2="${LX1}" y1="0" y2="${H}" stroke="#D4CBB8"/><line x1="${RX0}" x2="${RX0}" y1="0" y2="${H}" stroke="#D4CBB8"/>`;
+  /* draw from far to near: top of the aisle first, the left row (farther) before the right row */
+  const order=list.slice().sort((a,b)=>a.y0-b.y0||a.side-b.side);
+  order.forEach(b=>{
+    const n=b.recs.length, on=b.key===state.bin, left=b.side===0, x0=left?LX0:RX0, x1=x0+D, y0=b.y0, y1=y0+b.L;
+    const out=left?x0:x1, aisle=left?x1:x0;                    /* outer side carries the riser, the aisle side the low lip */
+    const P=(x,y,z)=>A(x,y,z);
+    let g=`<g class="bin${on?" on":""}" data-k="${esc(b.key)}" tabindex="0" role="button" aria-label="${esc(b.label)}, ${n} record${n===1?"":"s"}"><title>${esc(b.label)}: ${n} records</title>`;
+    g+=poly([P(x0,y0,0),P(x1,y0,0),P(x1,y1,0),P(x0,y1,0)],inside,ln,1);
+    const riser=()=>{ g+=poly([P(out,y0,0),P(out,y1,0),P(out,y1,RISER),P(out,y0,RISER)],left?wood2:wood,ln,1.1);
+      g+=poly([P(out,y0,RISER-13),P(out,y1,RISER-13),P(out,y1,RISER),P(out,y0,RISER)],on?acc:(left?"#3B3430":"#3B3430"),ln,1); };
+    const lip=()=>g+=poly([P(aisle,y0,0),P(aisle,y1,0),P(aisle,y1,LIP),P(aisle,y0,LIP)],on?acc:wood,ln,on?1.6:1.1);
+    const end=y=>g+=poly([P(x0,y,0),P(x1,y,0),P(x1,y,END),P(x0,y,END)],woodTop,ln,1);
+    if(left) riser(); else lip();
+    end(y0);
+    /* the records: one thin card per record, same spacing everywhere; the front one shows its cover */
+    const xa=x0+4, xb=x1-4;
+    for(let j=0;j<n;j++){
+      const r=b.recs[j], y=y0+PAD+j*SP+SP*0.5, h=HR-(hash(r.key)%4), lean=-4;
+      const pts=[P(xa,y,0),P(xb,y,0),P(xb,y+lean,h),P(xa,y+lean,h)];
+      const last=j===n-1, fill=`hsl(${hueOf(r)} 50% ${58+(hash(r.key)%22)}%)`;
+      g+=`<g class="rk" style="--d:${Math.round(j/n*520)}ms">`+poly(pts,fill,ln,0.55);
+      if(last){ const cov=coverOf(r), o=P(xa,y,0), u=[xb-xa,0], v=[AX.KX*h, lean*AX.SY+AX.KY*h];
+        if(cov) g+=`<image href="${esc(cov)}" width="1" height="1" preserveAspectRatio="none" transform="matrix(${u[0]} ${u[1]} ${(-v[0]).toFixed(2)} ${(-v[1]).toFixed(2)} ${(o[0]+v[0]).toFixed(1)} ${(o[1]+v[1]).toFixed(1)})"/>`;
+        g+=poly(pts,"none",ln,0.9); }
+      g+=`</g>`;
     }
-    g+=poly([T(0,BD,0),T(L,BD,0),T(L,BD,BH),T(0,BD,BH)],on?acc:pan,ln,on?1.6:1);
-    g+=poly([T(L,0,0),T(L,BD,0),T(L,BD,BH),T(L,0,BH)],pan,ln);
-    const lp=T(0,BD,BH*0.5), cp=T(L,BD,BH*0.4), lab=b.label.length>15?b.label.slice(0,14)+"…":b.label;
-    g+=`<text x="${(lp[0]-7).toFixed(1)}" y="${(lp[1]+4).toFixed(1)}" text-anchor="end" style="font-size:13px;fill:${on?acc:txt};stroke:#fff;stroke-width:3px">${esc(lab)}</text>`;
-    g+=`<text x="${(cp[0]+6).toFixed(1)}" y="${(cp[1]+4).toFixed(1)}" style="font-size:11.5px;font-weight:400;fill:${cssv("--muted","#4D525B")};stroke:#fff;stroke-width:2.5px">${n}</text>`;
-    maxY=Math.max(maxY,T(L,BD,0)[1]);
+    end(y1);
+    if(left) lip(); else riser();
+    /* the title sits outside the row: left row on the left, right row on the right */
+    const lp=A(left?LX0-8:RX1+8,y0+13,0), lab=b.label.length>18?b.label.slice(0,17)+"…":b.label;
+    g+=`<text x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" text-anchor="${left?"end":"start"}" class="blab" style="fill:${on?acc:txt}">${esc(lab)}</text>`;
+    g+=`<text x="${lp[0].toFixed(1)}" y="${(lp[1]+15).toFixed(1)}" text-anchor="${left?"end":"start"}" class="bnum" style="fill:${mut}">${n} record${n===1?"":"s"}</text>`;
     s+=g+"</g>";
   });
-  const H=Math.ceil(maxY+24);
+  /* the store cat naps in the walkway; move the mouse over it */
+  const cx=LX1+WK/2, cy=34;
+  s+=`<g class="scene cat" data-anim="2600" transform="translate(${cx.toFixed(1)} ${cy})" aria-hidden="true">
+    <g class="cbody"><path class="tail" d="M10 4 q16 -2 14 -16 q-1 -6 -6 -6" fill="none" stroke="#3B3430" stroke-width="3.2" stroke-linecap="round"/>
+    <ellipse cx="0" cy="4" rx="14" ry="8" fill="#E9A15A" stroke="#3B3430" stroke-width="1.2"/>
+    <path d="M-6 0 q3 6 0 12 M0 -3 q3 7 0 14 M6 -2 q3 6 0 12" stroke="#C47A35" stroke-width="1.6" fill="none"/>
+    <g class="chead"><circle cx="-13" cy="-2" r="7" fill="#E9A15A" stroke="#3B3430" stroke-width="1.2"/>
+     <path d="M-19 -6 l1 -7 l5 4 Z M-11 -8 l4 -5 l2 7 Z" fill="#E9A15A" stroke="#3B3430" stroke-width="1" stroke-linejoin="round"/>
+     <g class="eyes"><path d="M-17 -2 q1.5 1.2 3 0 M-12 -2 q1.5 1.2 3 0" stroke="#3B3430" stroke-width="1.1" fill="none"/></g>
+     <circle cx="-13.5" cy="1" r=".9" fill="#3B3430"/></g></g>
+    <text class="zz" x="-6" y="-12">z</text><text class="zz z2" x="-2" y="-18">z</text></g>`;
   const svg=$("#rb-bsvg"); svg.setAttribute("viewBox",`0 0 ${W} ${H}`); svg.setAttribute("height",H); svg.innerHTML=s;
   const all=$("#rb-allbin"); if(all) all.classList.toggle("on",!state.bin&&state.view==="bin");
 }
 function bindBins(){
   const sc=$("#rb-bscroll"); if(!sc) return;
   sc.addEventListener("click",e=>{ const g=e.target.closest(".bin"); if(!g) return; openBin(g.dataset.k); });
-  sc.addEventListener("keydown",e=>{ if(e.key==="Enter"){ const g=e.target.closest(".bin"); if(g) openBin(g.dataset.k); } });
+  sc.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ const g=e.target.closest(".bin"); if(g){ e.preventDefault(); openBin(g.dataset.k); } } });
 }
 function openBin(k){ state.bin=k; state.view="bin"; renderBins(); renderInBin(); }
 
 /* ---------- now playing ---------- */
+/* The turntable keeps one size whether or not a record is on. Heights lean the same way as the aisle. */
 function deckSVG(r){
   const cov=r&&coverOf(r), hue=r?hueOf(r):0;
   return `<svg viewBox="0 0 320 256" aria-hidden="true"><defs><clipPath id="rb-lc"><circle cx="140" cy="128" r="34"/></clipPath></defs>
-  <circle cx="140" cy="128" r="108" fill="#E4E4DE" stroke="#1B1D21" stroke-width="1.2"/>
-  <g class="spin${r?" on":""}">
+  <circle cx="140" cy="128" r="110" fill="#D9D7CF" stroke="#1B1D21" stroke-width="1.2"/>
+  <g class="spin${r?" on":""}" id="rb-spin">
+    ${Array.from({length:48},(_,k)=>{ const a=k/48*Math.PI*2; return `<circle cx="${(140+105*Math.cos(a)).toFixed(1)}" cy="${(128+105*Math.sin(a)).toFixed(1)}" r="1.5" fill="${k%2?"#1B1D21":"#8A877E"}"/>`; }).join("")}
+    <g class="disc${r?" in":""}">
     <circle cx="140" cy="128" r="100" fill="#141414" stroke="#1B1D21" stroke-width="1.2"/>
-    ${[90,80,70,60,50].map(q=>`<circle cx="140" cy="128" r="${q}" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="1"/>`).join("")}
-    <circle cx="140" cy="128" r="34" fill="${r?`hsl(${hue} 62% 72%)`:"#E4E4DE"}"/>
+    ${[92,84,76,68,60,52,46].map(q=>`<circle cx="140" cy="128" r="${q}" fill="none" stroke="rgba(255,255,255,${q%8?".07":".13"})" stroke-width="1"/>`).join("")}
+    <circle cx="140" cy="128" r="34" fill="${r?`hsl(${hue} 62% 72%)`:"#D9D7CF"}"/>
     ${cov?`<image href="${esc(cov)}" x="106" y="94" width="68" height="68" clip-path="url(#rb-lc)" preserveAspectRatio="xMidYMid slice"/>`:(r?`<path d="M106 128 A34 34 0 0 1 174 128 Z" fill="hsl(${(hue+180)%360} 55% 38%)"/>`:"")}
+    </g>
     <circle cx="140" cy="128" r="3" fill="#fff"/>
-    <path d="M140 40 A88 88 0 0 1 220 92" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="3"/>
   </g>
-  <circle cx="262" cy="46" r="14" fill="#E4E4DE" stroke="#1B1D21" stroke-width="1.2"/>
-  <g class="arm${r?" on":""}"><path d="M262 46 L270 150 L238 196" fill="none" stroke="#1B1D21" stroke-width="5" stroke-linecap="round"/><rect x="226" y="190" width="18" height="12" rx="2" fill="${cssv("--accent","#E0442E")}" stroke="#1B1D21" transform="rotate(34 235 196)"/></g>
-  <circle cx="288" cy="220" r="9" fill="#E4E4DE" stroke="#1B1D21"/><circle cx="258" cy="220" r="9" fill="#E4E4DE" stroke="#1B1D21"/>
+  ${r?`<path class="sheen" d="M78 70 A88 88 0 0 1 150 41" fill="none" stroke="rgba(255,255,255,.32)" stroke-width="5" stroke-linecap="round"/><path class="sheen" d="M206 190 A88 88 0 0 1 160 214" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="4" stroke-linecap="round"/>`:""}
+  <circle cx="262" cy="46" r="15" fill="#D9D7CF" stroke="#1B1D21" stroke-width="1.2"/><circle cx="262" cy="46" r="5" fill="#8A877E"/>
+  <g class="arm${r?" on":""}" id="rb-arm"><path d="M262 46 L270 150 L238 196" fill="none" stroke="#1B1D21" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><rect x="226" y="190" width="18" height="12" rx="2" fill="${cssv("--accent","#E0442E")}" stroke="#1B1D21" transform="rotate(34 235 196)"/></g>
+  ${[0,1].map(k=>`<g transform="translate(${250+k*34} 206)"><rect width="30" height="24" rx="3" fill="#F6EBC8" stroke="#1B1D21"/><path d="M5 17 A11 11 0 0 1 25 17" fill="none" stroke="#1B1D21" stroke-width=".8"/><path d="M21 9 l3 -3" stroke="#C8361F" stroke-width="1.4"/><line class="vu" id="rb-vu${k}" x1="15" y1="20" x2="15" y2="7" stroke="#1B1D21" stroke-width="1.2" stroke-linecap="round"/><circle cx="15" cy="20" r="1.8" fill="#1B1D21"/></g>`).join("")}
+  <text x="282" y="243" text-anchor="middle" style="font:800 7px sans-serif;letter-spacing:.12em;fill:#4D525B">L  ·  R</text>
   </svg>`;
+}
+/* the platter spins up with some weight and slows to a stop; the meters swing while it plays */
+const DECK={ang:0,vel:0,raf:0,t:0,paused:false,lvl:[0,0],last:null};
+const RM=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+function deckTick(t){
+  const dt=Math.min(.05,(t-(DECK.t||t))/1000); DECK.t=t;
+  const r=state.now!=null&&!DECK.paused, target=r?198:0;
+  DECK.vel+=(target-DECK.vel)*Math.min(1,dt*(target?1.4:0.9));
+  DECK.ang=(DECK.ang+DECK.vel*dt)%360;
+  const sp=document.getElementById("rb-spin"); if(sp) sp.setAttribute("transform",`rotate(${DECK.ang.toFixed(2)} 140 128)`);
+  const playing=AUDIO.el&&!AUDIO.el.paused, sp01=DECK.vel/198;
+  for(let k=0;k<2;k++){
+    const want=playing?0.45+Math.random()*0.55:sp01*(0.12+0.06*Math.sin(t/300+k));
+    DECK.lvl[k]+=(want-DECK.lvl[k])*(want>DECK.lvl[k]?0.5:0.12);
+    const n=document.getElementById("rb-vu"+k); if(n) n.setAttribute("transform",`rotate(${(-48+DECK.lvl[k]*96).toFixed(1)} 15 20)`);
+  }
+  if(target||DECK.vel>0.5||playing) DECK.raf=requestAnimationFrame(deckTick); else { DECK.raf=0; DECK.t=0; }
+}
+function deckGo(){ if(RM) return; if(!DECK.raf){ DECK.t=0; DECK.raf=requestAnimationFrame(deckTick); } }
+function renderDeck(){
+  const box=$("#rb-np"); if(!box) return;
+  stopAudio();
+  const r=state.now!=null?RECS[state.now]:null, fresh=r&&DECK.last!==r.key;
+  DECK.last=r?r.key:null; if(fresh){ DECK.paused=false; if(!RM) DECK.vel=0; }
+  const d=r?SDB.details[r.key]||null:null, cov=r&&coverOf(r);
+  box.innerHTML=`<div class="nptitle">${r?`<div class="ar">${esc(r.artist)}</div><div class="al">${esc(r.title)}</div>`:`<div class="ar">Nothing playing</div><div class="al">Pick a record</div>`}</div>
+   <div class="npmeta" id="rb-meta">${r?metaHTML(r,d):`<span class="note">Year, genre, label and pressing show here.</span>`}</div>
+   <div class="npbody${fresh?" fresh":""}">
+    <div class="npcover"><div class="slv${r?"":" empty"}" id="rb-slv" ${r?`role="button" tabindex="0" aria-label="Turn the sleeve over"`:""}>
+      ${r?`<div class="vinyl" aria-hidden="true"></div><div class="flipper"><div class="face front">${sleeve(r)}</div>${backFace(r)}</div>`:`<div class="hole">Cover</div>`}</div></div>
+    <div class="npdeck"><div class="tt" title="${r?"Click the turntable to stop or start it":""}"><div class="axo"><div class="plinth"><i class="f fb"></i><i class="f ft"></i><i class="f fr"></i><i class="f fl"></i>${deckSVG(r)}</div></div></div>
+     <div class="money" id="rb-money">${r?moneyHTML(r,d):`<div class="cap">Prices for sale show here.</div>`}</div></div>
+    <div class="npright"><div class="tlist" id="rb-tl">${r?`<p class="note">Looking up the tracklist…</p>`:`<p class="note" style="padding:6px 4px">Click a record in the bin below, or press Pick for me or the gumball machine, and it goes on the turntable with its tracklist. Click a track to hear 30 seconds of it. Tick a box to add the track to your DJ playlist.</p>`}</div></div>
+   </div>`;
+  if(r){
+    hydrateCovers(box);
+    const slv=$("#rb-slv"); const turn=()=>slv.classList.toggle("over"); slv.onclick=turn; slv.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); turn(); } };
+    $(".np .tt").onclick=()=>{ DECK.paused=!DECK.paused; $("#rb-arm").classList.toggle("on",!DECK.paused); deckGo(); };
+    lookup(r).then(info=>{ if(state.now===r.i) showTracks(r,info); });
+    if(!d) details(r).then(dd=>{ if(state.now!==r.i||!dd) return; $("#rb-meta").innerHTML=metaHTML(r,dd); $("#rb-money").innerHTML=moneyHTML(r,dd); });
+    coverColors(r).then(()=>{ if(state.now===r.i&&state.vibe==="auto") applyVibe(); });
+  }
+  deckGo(); applyVibe();
+}
+function metaHTML(r,d){
+  const bits=[`<span class="yr">${r.year||"Year ?"}</span>`, esc(r.genre)];
+  if(d&&d.label) bits.push(esc(d.label));
+  let h=bits.join(" · ");
+  if(d&&d.press) h+=` <span class="press" title="${d.press==="OP"?"Original pressing":d.press==="RE"?"Reissue":"Repress"}">${esc(d.press)}</span>`;
+  const more=[d&&d.styles?esc(d.styles):"", r.coll?"Collection: "+esc(r.coll):"", r.from?"Source: "+esc(r.from):"", r.quality?esc(r.quality):""].filter(Boolean);
+  if(more.length) h+=`<span class="styles"> · ${more.join(" · ")}</span>`;
+  return h;
 }
 const GRADES=[["Poor (P)","P"],["Fair (F)","F"],["Good (G)","G"],["Good Plus (G+)","G+"],["Very Good (VG)","VG"],["Very Good Plus (VG+)","VG+"],["Near Mint (NM or M-)","NM"],["Mint (M)","M"]];
 /* The price wave: every copy for sale, cheapest on the left, dearest on the right.
@@ -822,7 +1045,7 @@ function waveSVG(r,d){
   if(ebay&&ebay.length>=8){ const p95=ebay[Math.floor(ebay.length*0.95)]; const cap=Math.max(p95,...sug.map(p=>p.v),paid||0); over=ebay.filter(x=>x>cap).length; hi=cap; }
   if(hi-lo<1){ lo=Math.max(0,lo*0.6); hi=hi*1.4+0.5; }
   const lo0=lo, hi0=hi, padv=(hi-lo)*0.05; lo=Math.max(0,lo-padv); hi=hi+padv;
-  const W=520,H=72,L=8,R=W-8,base=44,top=4,X=v=>L+(Math.min(v,hi)-lo)/(hi-lo)*(R-L);
+  const W=300,H=60,L=6,R=W-6,base=38,top=4,X=v=>L+(Math.min(v,hi)-lo)/(hi-lo)*(R-L);
   const acc=cssv("--accent","#E0442E"), ink="#1B1D21", mut="#4D525B";
   let shape="", n=0;
   if(ebay){
@@ -848,35 +1071,7 @@ function waveSVG(r,d){
    <text x="${X(lo0)}" y="${H-3}" style="font:700 11px sans-serif;fill:${ink}">${fmt(lo0)}</text>
    <text x="${X(hi0)}" y="${H-3}" text-anchor="end" style="font:700 11px sans-serif;fill:${ink}">${fmt(hi0)}${over?"+":""}</text>`;
   const label=(ebay?`${n} copies for sale on eBay, ${fmt(ebay[0])} to ${fmt(ebay[n-1])}. `:"")+(dn?`${dn} for sale on Discogs${low?`, from ${money(low)}`:""}.`:"");
-  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)}">${shape}${axis}${marks}</svg>`;
-}
-function renderDeck(){
-  const box=$("#rb-np"); if(!box) return;
-  stopAudio();
-  const r=state.now!=null?RECS[state.now]:null;
-  const plinth=`<div class="tt"><div class="axo"><div class="plinth"><i class="f fb"></i><i class="f ft"></i><i class="f fr"></i><i class="f fl"></i>${deckSVG(r)}</div></div></div>`;
-  if(!r){
-    box.innerHTML=`<div class="nptitle"><div class="ar">Nothing playing</div><div class="al">Pick a record</div></div>
-     <div class="npbody"><div class="npleft">${plinth}</div><div class="npright"><p class="note" style="padding:6px 4px">Click a record in the bin below, or press Pick for me, and it goes on the turntable with its tracklist. Click a track to hear 30 seconds of it. Tick a box to add the track to your DJ playlist.</p></div></div>`;
-    applyVibe(); return;
-  }
-  const d=SDB.details[r.key]||null;
-  box.innerHTML=`<div class="nptitle"><div class="ar">${esc(r.artist)}</div><div class="al">${esc(r.title)}</div></div>
-   <div class="npbody"><div class="npleft">${plinth}<div class="meta" id="rb-meta">${metaHTML(r,d)}</div></div>
-    <div class="npright"><div class="tlist" id="rb-tl"><p class="note">Looking up the tracklist…</p></div></div></div>
-   <div class="money" id="rb-money">${moneyHTML(r,d)}</div>`;
-  lookup(r).then(info=>{ if(state.now===r.i) showTracks(r,info); });
-  if(!d) details(r).then(dd=>{ if(state.now!==r.i||!dd) return; $("#rb-meta").innerHTML=metaHTML(r,dd); $("#rb-money").innerHTML=moneyHTML(r,dd); });
-  coverColors(r).then(()=>{ if(state.now===r.i&&state.vibe==="auto") applyVibe(); });
-  applyVibe();
-}
-function metaHTML(r,d){
-  const bits=[`<span class="yr">${r.year||"Year ?"}</span>`, esc(r.genre)];
-  if(d&&d.label) bits.push(esc(d.label));
-  let h=bits.join(" · ");
-  if(d&&d.press) h+=` <span class="press" title="${d.press==="OP"?"Original pressing":d.press==="RE"?"Reissue":"Repress"}">${esc(d.press)}</span>`;
-  if(d&&d.styles) h+=`<div class="styles">${esc(d.styles)}</div>`;
-  return h;
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)}"><title>${esc(label)} Shaded: copies for sale by price. Dot: lowest listing. Ticks: condition prices. Triangle: what you paid.</title>${shape}${axis}${marks}</svg>`;
 }
 function moneyHTML(r,d){
   const vt=valueText(r), disc=d&&d.discogs?`https://www.discogs.com/release/${encodeURIComponent(d.discogs)}`:`https://www.discogs.com/search/?q=${encodeURIComponent(r.artist+" "+r.title)}&type=all`;
@@ -884,12 +1079,11 @@ function moneyHTML(r,d){
   const wave=d?waveSVG(r,d):"", eb=d&&d.ebay&&d.ebay.n>=2?d.ebay:null;
   const bits=[];
   if(eb) bits.push(`<b>${eb.n}</b> on <a class="lk" href="${ebay}" target="_blank" rel="noopener">eBay</a>`);
-  if(d&&(d.forSale||d.lowest)) bits.push(`<b>${d.forSale||0}</b> on <a class="lk" href="${disc}" target="_blank" rel="noopener">Discogs</a>${d.lowest?`, lowest <b>${money(d.lowest)}</b>`:""}`);
+  if(d&&(d.forSale||d.lowest)) bits.push(`<b>${d.forSale||0}</b> on <a class="lk" href="${disc}" target="_blank" rel="noopener">Discogs</a>${d.lowest?` from <b>${money(d.lowest)}</b>`:""}`);
   else bits.push(`<a class="lk" href="${disc}" target="_blank" rel="noopener">Discogs</a>`);
-  const key=wave?`<div class="wkey"><span><i class="kw"></i>${eb?"Copies for sale by price":"Discogs copies"}</span>${d&&d.lowest?`<span><i class="kd"></i>Lowest listing</span>`:""}${Object.keys(d&&d.suggested||{}).length?`<span><i class="kt"></i>Condition price</span>`:""}${r.cost?`<span><i class="kp"></i>You paid ${money(r.cost)}</span>`:""}</div>`:"";
-  return `<div class="facts"><b>Value ${vt||"not set"}</b>${vt&&r.vsrc?`<span class="vsrc">${esc(r.vsrc)}</span>`:""}${r.coll?`<span>Collection: ${esc(r.coll)}</span>`:""}${r.from?`<span>Source: ${esc(r.from)}</span>`:""}${r.quality?`<span>${esc(r.quality)}</span>`:""}</div>
-   <div class="wave">${wave||`<div class="cap">${d?"Discogs has no prices for this pressing yet.":(LIVE?"Checking prices…":"Prices show on the live page.")}</div>`}
-    <div class="wfoot"><span class="cap">For sale now: ${bits.join(" · ")}</span>${key}</div></div>`;
+  return `<div class="facts"><b>Value ${vt||"not set"}</b>${vt&&r.vsrc?`<span class="vsrc">${esc(r.vsrc)}</span>`:""}</div>
+   <div class="wave">${wave||`<div class="cap">${d?"No prices for this pressing yet.":(LIVE?"Checking prices…":"Prices show on the live page.")}</div>`}</div>
+   <div class="cap forsale">For sale: ${bits.join(" · ")}</div>`;
 }
 let DJ=ls("rb-dj")||[];
 function saveDJ(){ ls("rb-dj",DJ); const n=$("#rb-djn"); if(n) n.textContent=DJ.length?` (${DJ.length})`:""; }
@@ -936,31 +1130,54 @@ function inBinLabel(n){
   return {sel, right:`<b>${n}</b> record${n===1?"":"s"} in ${esc(where)}`};
 }
 const CRATES=[];
+function crateCount(W,n){ return Math.max(1,Math.min(4,Math.floor(W/290),Math.ceil(n/6))); }
 function renderInBin(){
   const host=$("#rb-cols"); if(!host) return;
   const list=inBinList(), lab=inBinLabel(list.length);
   $("#rb-insel").textContent=lab.sel; $("#rb-inright").innerHTML=lab.right;
   CRATES.length=0;
   if(!list.length){ host.innerHTML=`<div class="note" style="padding:20px">Nothing here. Try another bin or clear the search.</div>`; return; }
-  const W=host.clientWidth||700;
-  let n=state.view==="flight"?Math.max(1,Math.ceil(list.length/2)):Math.max(1,Math.min(8,Math.floor(W/170),Math.ceil(list.length/4)));
+  const W=host.clientWidth||900;
+  const n=state.view==="flight"?Math.max(1,Math.min(4,Math.ceil(list.length/2))):crateCount(W,list.length);
   const per=Math.ceil(list.length/n), parts=[];
   for(let k=0;k<n;k++){ const p=list.slice(k*per,(k+1)*per); if(p.length) parts.push(p); }
   host.innerHTML=parts.map((p,k)=>{ const a=letterOf(p[0]), z=letterOf(p[p.length-1]);
-    return `<div class="col" data-c="${k}"><div class="collab"><span>${a===z?a:a+" to "+z}</span><span class="cur" aria-label="Current letter">${a}</span></div><div class="crate" tabindex="0" aria-label="Crate ${a} to ${z}. Scroll up to dig through it.">${state.crate==="classic"?`<div class="classic">${p.map(r=>`<button class="crec${state.now===r.i?" on":""}" data-i="${r.i}" aria-label="${esc(r.artist+", "+r.title)}">${sleeve(r)}</button>`).join("")}</div>`:`<div class="stage"></div><div class="spacer"></div>`}</div></div>`; }).join("");
-  if(state.crate==="classic"){ hydrateCovers(host); return; }
+    return `<div class="col" data-c="${k}"><div class="collab"><span>${a===z?a:a+" to "+z} <small>${p.length}</small></span><span class="cur" aria-label="Current letter">${a}</span></div><div class="crate" tabindex="0" aria-label="Crate ${a} to ${z}. Scroll up to dig through it. Point at a record to pull it up, click to play it."><div class="stage"></div><div class="spacer"></div></div></div>`; }).join("");
   $$("#rb-cols .col").forEach((col,k)=>CRATES.push(makeCrate(col,parts[k])));
 }
+/* One crate: the front record sits low behind the crate's front panel, the rest stand behind it in a slight axonometric
+   so you see the stack. Point at a record and it rises as if pulled out of the bin; click and it stays up and plays.
+   Scrolling up flips the front records forward to dig deeper. */
 function makeCrate(col,recs){
   const items=[]; let last="";
   recs.forEach(r=>{ const L=letterOf(r); if(L!==last&&state.view!=="flight"){ items.push({div:L}); last=L; } items.push({r}); });
   const sc=col.querySelector(".crate"), stage=col.querySelector(".stage"), spacer=col.querySelector(".spacer"), cur=col.querySelector(".cur");
-  const C={items,sc,stage,nodes:new Map(),pos:0,S:100,STEP:70};
+  const C={items,sc,stage,nodes:new Map(),pos:0,S:120,STEP:60,hover:-1};
+  const DEEP=10;
   function size(){
-    const H=sc.clientHeight||300, Wd=sc.clientWidth||170;
-    C.S=Math.max(60,Math.min(Wd*0.78,H/2.45)); C.STEP=Math.max(40,C.S*0.55); C.H=H; C.W=Wd;
+    const H=sc.clientHeight||300, Wd=sc.clientWidth||260;
+    C.S=Math.round(Math.max(70,Math.min(Wd*0.64,H/1.9))); C.STEP=Math.max(36,C.S*0.42); C.H=H; C.W=Wd;
+    C.dx=C.S*0.045; C.dy=C.S*0.075; C.by=H-8; C.lip=Math.round(C.S*0.34);
+    C.x0=Math.round(Wd/2-C.S/2-C.dx*DEEP*0.45);
     stage.style.height=H+"px"; spacer.style.height=Math.round((items.length-1)*C.STEP)+"px";
-    C.hinge=Math.round(Math.min(H*0.56,C.S*0.42+C.S+12));
+    stage.style.perspective=(C.S*6)+"px"; stage.style.perspectiveOrigin=`50% ${C.by-C.S}px`;
+    drawBox();
+  }
+  function drawBox(){
+    const S=C.S, K=DEEP+1, x0=C.x0-6, x1=C.x0+S+6, by=C.by, lh=C.lip, bx=K*C.dx, byy=K*C.dy;
+    const back=`<svg class="cbox back" width="${C.W}" height="${C.H}" aria-hidden="true">
+      <polygon points="${x0},${by} ${x0+bx},${by-byy} ${x1+bx},${by-byy} ${x1},${by}" fill="#E8DCC6" stroke="#2A2622" stroke-width="1.2"/>
+      <polygon points="${x0},${by-lh} ${x0+bx},${by-byy-lh} ${x0+bx},${by-byy} ${x0},${by}" fill="var(--crate2,#B23A2B)" stroke="#2A2622" stroke-width="1.2"/>
+      <polygon points="${x0+bx},${by-byy-lh} ${x1+bx},${by-byy-lh} ${x1+bx},${by-byy} ${x0+bx},${by-byy}" fill="var(--crate2,#B23A2B)" stroke="#2A2622" stroke-width="1.2"/>
+      <polygon points="${x1},${by-lh} ${x1+bx},${by-byy-lh} ${x1+bx},${by-byy} ${x1},${by}" fill="var(--crate,#D9483A)" stroke="#2A2622" stroke-width="1.2"/>
+    </svg>`;
+    const holes=[]; const cols=Math.max(3,Math.round(S/34)); for(let k=0;k<cols;k++){ const w=(x1-x0-16)/cols; holes.push(`<rect x="${(x0+8+k*w+3).toFixed(1)}" y="${(by-lh+lh*0.42).toFixed(1)}" width="${(w-6).toFixed(1)}" height="${(lh*0.36).toFixed(1)}" rx="3" fill="rgba(0,0,0,.25)"/>`); }
+    const front=`<svg class="cbox front" width="${C.W}" height="${C.H}" aria-hidden="true">
+      <rect x="${x0}" y="${by-lh}" width="${x1-x0}" height="${lh}" rx="3" fill="var(--crate,#D9483A)" stroke="#2A2622" stroke-width="1.4"/>
+      <rect x="${((x0+x1)/2-S*0.16).toFixed(1)}" y="${by-lh+5}" width="${(S*0.32).toFixed(1)}" height="${Math.max(8,lh*0.22).toFixed(1)}" rx="${Math.max(4,lh*0.11).toFixed(1)}" fill="rgba(0,0,0,.35)"/>
+      ${holes.join("")}</svg>`;
+    stage.querySelectorAll(".cbox").forEach(e=>e.parentNode.removeChild(e));
+    stage.insertAdjacentHTML("afterbegin",back); stage.insertAdjacentHTML("beforeend",front);
   }
   function node(j){
     let el=C.nodes.get(j); if(el) return el;
@@ -968,28 +1185,30 @@ function makeCrate(col,recs){
     if(it.div){ el.className="card div"; el.innerHTML=`<div class="face front"><div class="big">${it.div}</div></div><div class="tab">${it.div}</div><div class="face back" style="--bk:#E9E3D6"></div>`; }
     else { const r=it.r; el.className="card rec"+(state.now===r.i?" on":""); el.dataset.i=r.i; el.setAttribute("role","button"); el.setAttribute("aria-label",r.artist+", "+r.title);
       el.innerHTML=`<div class="face front">${sleeve(r)}</div>`; }
-    el.dataset.j=j; stage.appendChild(el); C.nodes.set(j,el);
+    el.dataset.j=j; stage.insertBefore(el,stage.querySelector(".cbox.front")); C.nodes.set(j,el);
     if(!it.div) hydrateCovers(el);
     return el;
   }
   function paint(){
     const max=Math.max(0,sc.scrollHeight-sc.clientHeight);
     C.pos=Math.max(0,Math.min(items.length-1,(max-sc.scrollTop)/C.STEP));
-    const lo=Math.max(0,Math.floor(C.pos)-2), hi=Math.min(items.length-1,Math.floor(C.pos)+7), keep=new Set();
-    const S=C.S, x=-S/2, base=C.hinge;
+    const lo=Math.max(0,Math.floor(C.pos)-2), hi=Math.min(items.length-1,Math.floor(C.pos)+DEEP+1), keep=new Set();
+    const S=C.S;
     for(let j=lo;j<=hi;j++){
-      const d=j-C.pos; if(d<-2) continue; keep.add(j);
+      const d=j-C.pos; if(d<-2.2) continue; keep.add(j);
       const el=node(j), it=items[j];
-      el.style.width=S+"px"; el.style.height=S+"px"; el.style.marginLeft=x+"px";
-      let ty=base-S, tx=0, rot=0, z=1000-j, op=1;
-      if(d>=0){ ty-=d*S*0.075; tx=d*S*0.035; if(d>6) op=Math.max(0,7-d); }
-      else { rot=-180*Math.min(1,-d); z=2000+j; op=d<-1.6?Math.max(0,(d+2)/0.4):1; }
-      if(it.r&&state.now===it.r.i) ty-=S*0.16;
-      el.style.top="0px"; el.style.zIndex=z; el.style.opacity=op;
-      el.style.transform=`translate(${tx.toFixed(1)}px,${ty.toFixed(1)}px) rotateX(${rot.toFixed(1)}deg)`;
-      if(rot<-60&&it.r&&!el.querySelector(".back")) el.insertAdjacentHTML("beforeend",backFace(it.r));
+      el.style.width=S+"px"; el.style.height=S+"px";
+      let tx=C.x0, ty=C.by-S, rot=0, z=1000-j, op=1, lift=0;
+      if(d>=0){ tx+=d*C.dx; ty-=d*C.dy; if(d>DEEP-1) op=Math.max(0,DEEP-d);
+        const on=it.r&&state.now===it.r.i;
+        if(on) lift=S*0.6; else if(C.hover===j) lift=S*0.4; }
+      else { rot=-105*Math.min(1,-d); z=2000+j; op=d<-1.5?Math.max(0,(d+2.2)/0.7):1; }
+      el.classList.toggle("up",lift>0);
+      el.style.zIndex=z; el.style.opacity=op;
+      el.style.transform=`translate(${tx.toFixed(1)}px,${(ty-lift).toFixed(1)}px) rotateX(${rot.toFixed(1)}deg)`;
+      if(rot<-80&&it.r&&!el.querySelector(".back")) el.insertAdjacentHTML("beforeend",backFace(it.r));
     }
-    C.nodes.forEach((el,j)=>{ if(!keep.has(j)){ el.remove(); C.nodes.delete(j); } });
+    C.nodes.forEach((el,j)=>{ if(!keep.has(j)){ el.parentNode&&el.parentNode.removeChild(el); C.nodes.delete(j); } });
     let L="#"; for(let j=Math.round(C.pos);j>=0;j--){ if(items[j].div){ L=items[j].div; break; } if(items[j].r){ L=letterOf(items[j].r); break; } }
     cur.textContent=L;
   }
@@ -999,16 +1218,18 @@ function makeCrate(col,recs){
   sc.addEventListener("scroll",()=>{ if(!raf) raf=requestAnimationFrame(()=>{ raf=0; paint(); });
     clearTimeout(snapT); if(snapping){ snapping=false; return; }
     snapT=setTimeout(()=>{ const k=Math.round(C.pos); if(Math.abs(k-C.pos)>0.02){ snapping=true; C.goTo(k); } },180); },{passive:true});
-  /* keep the same record in front when the crate changes size */
-  if(window.ResizeObserver){ let lastH=0; new ResizeObserver(()=>{ const h=sc.clientHeight; if(!h||h===lastH) return; const keepPos=C.pos; lastH=h; size(); stage.style.perspective=(C.S*5)+"px"; stage.style.perspectiveOrigin=`50% ${C.hinge}px`; C.goTo(Math.round(keepPos)); paint(); }).observe(sc); }
-  stage.style.perspective=(C.S*5)+"px"; stage.style.perspectiveOrigin=`50% ${C.hinge}px`;
-  paint();
   C.goTo=j=>{ const max=Math.max(0,sc.scrollHeight-sc.clientHeight); sc.scrollTop=max-j*C.STEP; };
+  if(window.ResizeObserver){ let lastH=0,lastW=0; new ResizeObserver(()=>{ const h=sc.clientHeight, w=sc.clientWidth; if(!h||(h===lastH&&w===lastW)) return; const keepPos=C.pos; lastH=h; lastW=w; size(); C.goTo(Math.round(keepPos)); paint(); }).observe(sc); }
+  paint();
+  /* pull a record up when the mouse is over it */
+  stage.addEventListener("mouseover",e=>{ const el=e.target.closest(".card.rec"); const j=el?+el.dataset.j:-1; if(j===C.hover) return; if(el&&j<C.pos-0.3) return; C.hover=j; paint(); });
+  stage.addEventListener("mouseleave",()=>{ if(C.hover<0) return; C.hover=-1; paint(); });
   stage.addEventListener("click",e=>{ const el=e.target.closest(".card"); if(!el) return; const j=+el.dataset.j;
-    if(Math.abs(j-C.pos)>0.5) C.goTo(j);
+    if(j<C.pos-0.3){ C.goTo(j); return; }
     if(el.classList.contains("rec")) play(+el.dataset.i); });
   stage.addEventListener("keydown",e=>{ if(e.key==="Enter"){ const el=e.target.closest(".card.rec"); if(el) play(+el.dataset.i); } });
-  sc.addEventListener("keydown",e=>{ if(e.key==="ArrowUp"||e.key==="ArrowDown"){ e.preventDefault(); C.goTo(Math.round(C.pos)+(e.key==="ArrowUp"?1:-1)); } });
+  sc.addEventListener("keydown",e=>{ if(e.key==="ArrowUp"||e.key==="ArrowDown"){ e.preventDefault(); C.goTo(Math.round(C.pos)+(e.key==="ArrowUp"?1:-1)); }
+    if(e.key==="Enter"){ const it=items[Math.round(C.pos)]; if(it&&it.r) play(it.r.i); } });
   C.resize=()=>{ const k=Math.round(C.pos); size(); C.goTo(k); paint(); };
   return C;
 }
@@ -1037,7 +1258,7 @@ function renderPop(){
   const toDig=()=>{ if(state.mode!=="dig"){ state.mode="dig"; renderAll(); } };
   $("#rb-pickgo").onclick=()=>{ const pl=pickPool(); if(!pl.length) return; let n; do{ n=pl[Math.floor(Math.random()*pl.length)].i }while(pl.length>1&&n===state.now); toDig(); play(n); };
   $("#rb-flight").onclick=()=>{ const pl=pickPool().slice(); if(!pl.length) return; toDig();
-    const host=$("#rb-cols"), bins=Math.max(1,Math.min(8,Math.floor((host&&host.clientWidth||700)/170)));
+    const host=$("#rb-cols"), bins=crateCount(host&&host.clientWidth||900,99);
     for(let k=pl.length-1;k>0;k--){ const j=Math.floor(Math.random()*(k+1)); [pl[k],pl[j]]=[pl[j],pl[k]]; }
     state.flight=pl.slice(0,bins*2).map(r=>r.i); state.view="flight"; renderBins(); renderInBin(); play(state.flight[0]); };
   $("#rb-showall").onclick=()=>{ toDig(); state.view="pool"; renderBins(); renderInBin(); };
@@ -1070,14 +1291,14 @@ function boardHTML(){
   const items=listItems(); if(!items) return "";
   const draft=state.list==="draft", tot=items.reduce((a,x)=>a+(typeof x.len==="number"?x.len:lenMs(x.len)),0);
   return `<div class="board on"><div class="bt"><span>${esc(listName())}</span><span>${items.length} TRK${tot?" · "+fmtLen(tot):""}</span></div>
-   <ol>${items.length?items.map((x,k)=>`<li><i>${String(k+1).padStart(2,"0")}</i>${esc(x.t)} – ${esc(x.artist)}${draft?` <button data-rm="${k}" aria-label="Remove ${esc(x.t)}" style="margin-left:auto;color:#FFD84D">✕</button>`:""}</li>`).join(""):`<li>TICK TRACKS IN NOW PLAYING</li>`}</ol>
+   <ol>${items.length?items.map((x,k)=>`<li style="--k:${Math.min(k,24)}"><i>${String(k+1).padStart(2,"0")}</i>${esc(x.t)} – ${esc(x.artist)}${draft?` <button data-rm="${k}" aria-label="Remove ${esc(x.t)}" style="margin-left:auto;color:#FFD84D">✕</button>`:""}</li>`).join(""):`<li>TICK TRACKS IN NOW PLAYING</li>`}</ol>
    ${draft?`<div class="tools"><input id="dj-name" placeholder="Name this playlist" value="${esc(ls("rb-djname")||"")}" aria-label="Playlist name"><button class="btn sm go" id="dj-save">Save playlist</button><button class="btn sm" id="dj-copy">Copy</button><button class="btn sm" id="dj-clear">Clear</button></div><div class="note" id="dj-msg" style="color:#ddd;text-transform:none;letter-spacing:0;margin-top:6px"></div>`:""}</div>`;
 }
 const DESKART=`<svg viewBox="0 0 400 96" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
  <rect x="0" y="62" width="400" height="34" fill="#8E5E33"/><path d="M0 62h400" stroke="#5E3D20" stroke-width="2"/>
- <g transform="translate(36,10)"><path d="M6 52 Q2 26 34 24 L70 24 Q102 26 98 52 Z" fill="#C8361F" stroke="#3A2A1C" stroke-width="1.5"/><path d="M0 14 Q2 2 20 4 L84 4 Q102 2 104 14 L100 22 Q86 16 52 16 Q18 16 4 22 Z" fill="#C8361F" stroke="#3A2A1C" stroke-width="1.5"/><circle cx="52" cy="40" r="11" fill="#F5E9C8" stroke="#3A2A1C"/><circle cx="52" cy="40" r="3" fill="#3A2A1C"/>${[0,1,2,3,4,5,6,7].map(k=>`<circle cx="${52+8*Math.cos(k*0.75)}" cy="${40+8*Math.sin(k*0.75)}" r="1.6" fill="#3A2A1C"/>`).join("")}<path d="M100 40 q30 6 40 22" fill="none" stroke="#3A2A1C" stroke-width="2"/></g>
- <g transform="translate(250,40)"><ellipse cx="30" cy="20" rx="30" ry="9" fill="#9AA0A6" stroke="#3A2A1C"/><ellipse cx="30" cy="17" rx="19" ry="5" fill="#5C6166"/><rect x="34" y="8" width="26" height="4" rx="2" fill="#EEE" stroke="#3A2A1C" stroke-width=".8" transform="rotate(-14 34 10)"/><path d="M58 4 q4-8 0-14 q-4-6 2-12" fill="none" stroke="#B9BDC2" stroke-width="1.5" opacity=".7"/></g>
- <g transform="translate(330,18)"><rect width="56" height="44" rx="3" fill="#F5E9C8" stroke="#3A2A1C"/><text x="28" y="18" text-anchor="middle" style="font:800 10px sans-serif;fill:#3A2A1C">NO</text><text x="28" y="32" text-anchor="middle" style="font:800 9px sans-serif;fill:#C8361F">REFUNDS</text></g>
+ <g class="scene phone" data-anim="1500" transform="translate(36,10)"><g class="ring"><path d="M-6 6 q-6 8 0 16 M-12 2 q-8 12 0 24 M112 6 q6 8 0 16 M118 2 q8 12 0 24" fill="none" stroke="#C8361F" stroke-width="2" stroke-linecap="round"/></g><g class="base"><path d="M6 52 Q2 26 34 24 L70 24 Q102 26 98 52 Z" fill="#C8361F" stroke="#3A2A1C" stroke-width="1.5"/></g><path class="hs" d="M0 14 Q2 2 20 4 L84 4 Q102 2 104 14 L100 22 Q86 16 52 16 Q18 16 4 22 Z" fill="#C8361F" stroke="#3A2A1C" stroke-width="1.5"/><g><circle cx="52" cy="40" r="11" fill="#F5E9C8" stroke="#3A2A1C"/><circle cx="52" cy="40" r="3" fill="#3A2A1C"/>${[0,1,2,3,4,5,6,7].map(k=>`<circle cx="${52+8*Math.cos(k*0.75)}" cy="${40+8*Math.sin(k*0.75)}" r="1.6" fill="#3A2A1C"/>`).join("")}<path d="M100 40 q30 6 40 22" fill="none" stroke="#3A2A1C" stroke-width="2"/></g></g>
+ <g class="scene ash" data-anim="2600" transform="translate(250,40)"><ellipse cx="30" cy="20" rx="30" ry="9" fill="#9AA0A6" stroke="#3A2A1C"/><ellipse cx="30" cy="17" rx="19" ry="5" fill="#5C6166"/><rect x="34" y="8" width="26" height="4" rx="2" fill="#EEE" stroke="#3A2A1C" stroke-width=".8" transform="rotate(-14 34 10)"/><path class="smoke s1" d="M58 4 q4-8 0-14 q-4-6 2-12" fill="none" stroke="#B9BDC2" stroke-width="1.5" opacity=".7"/><path class="smoke s2" d="M58 4 q-4-8 0-14 q4-6 -2-12" fill="none" stroke="#B9BDC2" stroke-width="1.5" opacity="0"/></g>
+ <g class="scene sign" data-anim="1800" transform="translate(330,18)"><g class="swing"><path d="M28 -14 L10 0 M28 -14 L46 0" stroke="#3A2A1C" stroke-width="1"/><circle cx="28" cy="-14" r="2" fill="#3A2A1C"/><rect width="56" height="44" rx="3" fill="#F5E9C8" stroke="#3A2A1C"/><text x="28" y="18" text-anchor="middle" style="font:800 10px sans-serif;fill:#3A2A1C">NO</text><text x="28" y="32" text-anchor="middle" style="font:800 9px sans-serif;fill:#C8361F">REFUNDS</text></g></g>
 </svg>`;
 function renderDJMode(){
   const djs=[...new Set(SDB.lists.map(l=>l.by))];
@@ -1127,7 +1348,7 @@ function bindBoard(){
 }
 
 /* the wall: records left to right on shelves, moved by scrolling up and down */
-const WALL={list:[],nodes:new Map(),props:[]};
+const WALL={list:[],nodes:new Map(),props:[],tags:[]};
 const PROPS=["gumball","sticker","cassettes","cds","sale","poster"];
 function propSVG(kind,S,h){
   const w=Math.round(S*0.62);
@@ -1151,9 +1372,12 @@ function buildWall(){
   track.style.width=total+"px";
   let sh=""; for(let row=0;row<R;row++){ const y=12+row*(S+30)+S+2; sh+=`<div class="shelf" style="top:${y}px;width:${total}px"></div>`; }
   track.insertAdjacentHTML("beforeend",sh+`<div class="wfloor" style="width:${total}px"></div>`);
+  const gof={artist:r=>letterOf(r),genre:r=>r.genre||"Other",year:r=>BINBY.year.of(r),value:r=>valueBand(valueOf(r))}[state.wallBy]||(r=>letterOf(r));
+  WALL.tags=[]; let lastG=null; WALL.list.forEach((r,k)=>{ const g=gof(r); if(g!==lastG){ lastG=g; const c=Math.floor(k/R), row=k%R;
+    WALL.tags.push({c,html:`<div class="shelftag" style="left:${22+c*CW}px;top:${12+row*(S+30)+S+3}px;max-width:${Math.max(CW*2-10,60)}px">${esc(g)}</div>`}); } });
   WALL.props=[]; for(let c=5;c<cols;c+=6+(hash("p"+c)%4)){ const h=hash("w"+c), row=h%R, kind=PROPS[h%PROPS.length], p=propSVG(kind,S,h);
     const x=24+c*CW-Math.round(p.w*0.45), y=12+row*(S+30)+S+2-p.h;
-    WALL.props.push({c,html:`<div class="prop" style="left:${x}px;top:${y}px">${p.svg}</div>`}); }
+    WALL.props.push({c,html:`<div class="prop scene p-${kind}" data-anim="1400" style="left:${x}px;top:${y}px">${p.svg}</div>`}); }
   $("#rb-wallcount").innerHTML=`<b>${WALL.list.length}</b> record${WALL.list.length===1?"":"s"}`;
   if(!WALL.list.length) track.insertAdjacentHTML("beforeend",`<div class="wempty" style="width:${Wv}px">${listItems()?"None of this playlist's records are in the library yet.":"Nothing matches the search."}</div>`);
   sc.scrollTop=0; paintWall();
@@ -1176,8 +1400,8 @@ function paintWall(){
     track.appendChild(el); WALL.nodes.set(k,el); hydrateCovers(el);
   }
   WALL.nodes.forEach((el,k)=>{ if(!keep.has(k)){ el.remove(); WALL.nodes.delete(k); } });
-  $$("#rb-wtrack .prop").forEach(p=>p.remove());
-  track.insertAdjacentHTML("beforeend",WALL.props.filter(p=>p.c>=c0-1&&p.c<=c1+1).map(p=>p.html).join(""));
+  $$("#rb-wtrack .prop,#rb-wtrack .shelftag").forEach(p=>p.parentNode.removeChild(p));
+  track.insertAdjacentHTML("beforeend",WALL.tags.filter(p=>p.c>=c0-2&&p.c<=c1+1).map(p=>p.html).join("")+WALL.props.filter(p=>p.c>=c0-1&&p.c<=c1+1).map(p=>p.html).join(""));
 }
 function flipRec(el,on){
   if(on&&!el.querySelector(".back")){ const r=RECS[+el.dataset.i]; if(r) el.querySelector(".inner").insertAdjacentHTML("beforeend",backFace(r)); }
@@ -1483,8 +1707,8 @@ function updateCount(){
 function renderDig(){
   $("#rb-main").innerHTML=`<div class="dig">
    <div class="panel binsp"><div class="pbar"><span class="glab">Bins by</span><div class="seg">${Object.keys(BINBY).map(k=>`<button class="btn sm${state.by===k?" on":""}" data-by="${k}">${BINBY[k].label}</button>`).join("")}</div><button class="btn sm" id="rb-allbin">All records</button></div>
-    <div class="steps"><span><b>1</b>Pick how to sort</span><span><b>2</b>Scroll to move along the bins</span><span><b>3</b>Click a bin to open it below</span></div>
-    <div class="bscroll" id="rb-bscroll" tabindex="0" aria-label="Record bins"><svg id="rb-bsvg" role="img" aria-label="Record bins, each as long as its number of records"></svg></div></div>
+    <div class="steps"><span><b>1</b>Pick how to sort</span><span><b>2</b>Scroll to walk down the aisle</span><span><b>3</b>Click a bin to open it below</span></div>
+    <div class="bscroll" id="rb-bscroll" tabindex="0" aria-label="Record bins"><div class="scene tube" data-anim="2200" aria-hidden="true"><i class="lamp"></i><i class="cone"></i>${[0,1,2,3,4,5,6,7].map(k=>`<i class="mote" style="--k:${k}"></i>`).join("")}</div><svg id="rb-bsvg" role="img" aria-label="Record bins, each as long as its number of records"></svg></div></div>
    <div class="panel np" id="rb-np"></div>
    <div class="panel inbin"><div class="pbar"><span class="glab">In the bin</span><span class="sel" id="rb-insel"></span><span class="right" id="rb-inright"></span></div><div class="cols" id="rb-cols"></div></div>
   </div>`;
@@ -1496,7 +1720,6 @@ function renderDig(){
 function renderAll(){
   ROOT.dataset.layout=state.layout; ROOT.dataset.mode=state.mode;
   $$("[data-mode]").forEach(b=>b.classList.toggle("on",b.dataset.mode===state.mode));
-  $("#rb-tlayout").classList.toggle("on",state.layout==="b"); $("#rb-tcrate").classList.toggle("on",state.crate==="classic");
   updateCount(); saveDJ(); stopAudio();
   if(state.mode==="dj") renderDJMode(); else if(state.mode==="manage") renderManage(); else renderDig();
   applyVibe(); renderPop(); fit();
@@ -1505,19 +1728,17 @@ function navHTML(){
   const counts={}; RECS.forEach(r=>counts[r.genre]=(counts[r.genre]||0)+1);
   const gs=Object.keys(GENRE_PAT).filter(g=>counts[g]).sort((a,b)=>counts[b]-counts[a]);
   return `<div class="grp"><span class="glab">Browse</span><button class="btn" data-mode="dig">Bin Digging</button></div>
-   <div class="grp"><span class="glab">What to play?</span><button class="btn" data-mode="dj">DJ Playlists<span id="rb-djn"></span></button><button class="btn" id="rb-pickbtn">Pick for me</button></div>
+   <div class="grp"><span class="glab">What to play?</span><button class="btn" data-mode="dj">DJ Playlists<span id="rb-djn"></span></button><button class="btn" id="rb-pickbtn">Pick for me</button>${GUMBALL}</div>
    <div class="grp"><span class="glab">Vibe</span><button class="btn" data-vibe="auto" title="Follows the record that's playing">Auto</button><button class="btn" data-vibe="plain">Plain</button><select id="rb-vibesel" aria-label="Genre vibe"><option value="">Genre…</option>${gs.map(g=>`<option value="${esc(g)}">${esc(g)}</option>`).join("")}</select></div>
-   <div class="grp"><span class="glab">Find</span><input id="rb-q" type="search" placeholder="Artist or album" aria-label="Search" value="${esc(state.q)}"></div>
-   <div class="grp test"><span class="glab">Test</span><button class="btn" id="rb-tlayout">Side panel</button><button class="btn" id="rb-tcrate">Classic crates</button></div>`;
+   <div class="grp"><span class="glab">Find</span><input id="rb-q" type="search" placeholder="Artist or album" aria-label="Search" value="${esc(state.q)}"></div>`;
 }
 function bindNav(){
   $$("[data-mode]").forEach(b=>b.onclick=()=>{ state.mode=b.dataset.mode; renderAll(); });
   $("#rb-pickbtn").onclick=()=>{ state.pop=!state.pop; renderPop(); };
+  $("#rb-gum").onclick=gumballPick;
   $$("[data-vibe]").forEach(b=>b.onclick=()=>setVibe(b.dataset.vibe));
   $("#rb-vibesel").onchange=e=>setVibe(e.target.value||"auto");
   let qt; $("#rb-q").oninput=e=>{ clearTimeout(qt); qt=setTimeout(()=>{ state.q=e.target.value; if(state.mode==="dj") buildWall(); else if(state.mode==="dig"){ if(state.view==="flight") state.view="bin"; renderInBin(); } },220); };
-  $("#rb-tlayout").onclick=()=>{ state.layout=state.layout==="b"?"a":"b"; ls("rb-layout",state.layout); renderAll(); };
-  $("#rb-tcrate").onclick=()=>{ state.crate=state.crate==="classic"?"flip":"classic"; ls("rb-crate",state.crate); renderAll(); };
   $("#rb-manage").onclick=()=>{ state.mode=state.mode==="manage"?"dig":"manage"; renderAll(); };
 }
 /* fit the page to the window; on phones the page scrolls down instead */
@@ -1561,6 +1782,7 @@ function signOut(){
 let started=false;
 function start(){
   started=true;
+  const ne=$("#rb-neon"); if(ne&&!ne.innerHTML) ne.innerHTML=NEON;
   $("#rb-nav").innerHTML=navHTML(); bindNav();
   if(state.mode==="manage"&&AUTH.role!=="admin") state.mode="dig";
   renderAll();
